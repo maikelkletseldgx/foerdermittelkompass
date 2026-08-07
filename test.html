@@ -1,0 +1,2387 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>DGX · Fördermittelkompass — Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400;1,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E1014; --ink-soft:#2A2E36; --steel-dk:#474B55; --steel:#6A707A; --mute:#8A909C;
+    --fog:#D5DCE6; --fog-hover:#C2CCDB; --fog-deep:#4A5A78; --sand:#B8A170; --sand-soft:#E6DEC9;
+    --cloud:#F5F7F9; --cloud-2:#EDF0F4; --line:#E4E7EC; --line-soft:#EDEFF3; --white:#fff;
+    --pos:#5F8A24; --warn:#C6892A; --danger:#C0473B;
+    --e-A:#00A651; --e-B:#5FAD31; --e-C:#B1CC40; --e-D:#F9E11E; --e-E:#F6A623; --e-F:#E98016; --e-G:#D9483A; --e-H:#B93027;
+    --font-sans:'Archivo',-apple-system,sans-serif; --font-serif:'Libre Caslon Text',Georgia,serif; --font-mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  @page{ size:A4; margin:0 }
+  *{ box-sizing:border-box; margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact }
+  html,body{ background:#e9ebee }
+  body{ font-family:var(--font-sans); color:var(--ink); -webkit-font-smoothing:antialiased; font-feature-settings:"ss01","cv11"; display:flex }
+
+  /* ============ EINGABE-PANEL ============ */
+  .panel{ width:400px; flex-shrink:0; height:100vh; overflow-y:auto; background:#fff; border-right:1px solid var(--line); position:sticky; top:0; padding:0 0 60px }
+  .panel-head{ position:sticky; top:0; z-index:10; background:var(--ink); color:#fff; padding:18px 22px; display:flex; align-items:center; justify-content:space-between }
+  .panel-head .t{ font-size:15px; font-weight:800; letter-spacing:-.3px }
+  .panel-head .t small{ display:block; font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; color:var(--fog); font-weight:500; text-transform:uppercase; margin-top:2px }
+  .panel-head button{ background:var(--sand); color:var(--ink); border:none; padding:9px 14px; border-radius:5px; font-family:var(--font-sans); font-size:12px; font-weight:700; cursor:pointer }
+  .panel-head button:hover{ filter:brightness(1.05) }
+  .grp{ border-bottom:1px solid var(--line-soft) }
+  .grp-h{ padding:13px 22px; font-family:var(--font-mono); font-size:9.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--fog-deep); cursor:pointer; display:flex; align-items:center; justify-content:space-between; user-select:none; background:var(--cloud) }
+  .grp-h::after{ content:'▾'; font-size:10px; color:var(--steel); transition:transform .2s }
+  .grp.closed .grp-h::after{ transform:rotate(-90deg) }
+  .grp-body{ padding:14px 22px 18px }
+  .grp.closed .grp-body{ display:none }
+  .fld{ margin-bottom:11px }
+  .fld:last-child{ margin-bottom:0 }
+  .fld label{ display:block; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--steel); margin-bottom:4px }
+  .fld input, .fld select, .fld textarea{ width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:6px; font-family:var(--font-sans); font-size:13px; color:var(--ink); outline:none; background:#fff }
+  .fld input:focus, .fld select:focus, .fld textarea:focus{ border-color:var(--fog-deep) }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:8px }
+  .row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px }
+  .hint{ font-size:9.5px; color:var(--mute); margin-top:3px; line-height:1.4 }
+  .fld label.lab-gen{ display:flex; align-items:center; justify-content:space-between; gap:6px }
+  .fld-gen{ background:var(--cloud-2); border:1px solid var(--line); color:var(--fog-deep); font-family:var(--font-mono); font-size:8px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:2px 6px; border-radius:4px; cursor:pointer; line-height:1.4 }
+  .fld-gen:hover{ background:var(--fog); border-color:var(--fog-deep) }
+  .auto-toggle{ display:flex; align-items:center; gap:6px; font-size:9.5px; color:var(--steel); margin-top:6px; cursor:pointer; user-select:none }
+  .auto-toggle input{ width:auto; accent-color:var(--fog-deep) }
+  .typ-seg{ display:flex; gap:0; border:1px solid var(--line); border-radius:7px; overflow:hidden }
+  .proj-btns{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap }
+  .proj-btns button{ flex:1; min-width:70px; padding:7px 6px; border:1px solid var(--line); border-radius:6px; background:#fff; font-family:var(--font-sans); font-size:10.5px; font-weight:700; color:var(--steel-dk); cursor:pointer }
+  .proj-btns button:hover{ background:var(--cloud) }
+  .typ-seg button{ flex:1; padding:9px 8px; border:none; background:#fff; font-family:var(--font-sans); font-size:12px; font-weight:700; color:var(--steel); cursor:pointer; border-right:1px solid var(--line) }
+  .typ-seg button:last-child{ border-right:none }
+  .typ-seg button.on{ background:var(--ink); color:#fff }
+  .farb-sw{ display:flex; gap:5px; margin-top:4px }
+  .farb-sw span{ width:24px; height:24px; border-radius:5px; cursor:pointer; border:2px solid transparent; opacity:.4 }
+  .farb-sw span.sel{ opacity:1; border-color:var(--ink) }
+  .kls-dot{ width:26px; height:26px; border-radius:6px; display:inline-block }
+  .cmp-farb{ width:34px; height:16px; border-radius:4px; display:inline-block }
+  .farb-chip{ width:16px; height:16px; border-radius:4px; display:inline-block; vertical-align:-2px; margin-left:4px }
+
+  .drop-zone{ border:2px dashed var(--line); border-radius:8px; padding:18px; text-align:center; cursor:pointer; transition:border-color .2s, background .2s; font-size:12px; color:var(--steel) }
+  .drop-zone:hover, .drop-zone.over{ border-color:var(--fog-deep); background:var(--cloud) }
+  .drop-zone.has-img{ padding:0; border-style:solid; overflow:hidden }
+  .drop-zone img{ width:100%; height:120px; object-fit:cover; display:block }
+
+  .ampel-edit{ display:flex; align-items:center; gap:6px; margin-bottom:7px }
+  .ampel-edit input[type=text]{ flex:1; min-width:0; padding:6px 8px; font-size:12px }
+  .ampel-edit .dots{ display:flex; gap:4px }
+  .ampel-edit .db{ width:20px; height:20px; border-radius:50%; border:2px solid transparent; cursor:pointer; opacity:.35 }
+  .ampel-edit .db.sel{ opacity:1; border-color:var(--ink) }
+  .db.r{ background:var(--danger) } .db.y{ background:var(--warn) } .db.g{ background:var(--pos) }
+  .mini-add{ background:var(--cloud-2); border:none; color:var(--fog-deep); font-size:11px; font-weight:700; padding:6px 10px; border-radius:5px; cursor:pointer; margin-top:4px }
+  .mini-add:hover{ background:var(--fog) }
+  .mini-del{ background:none; border:none; color:var(--danger); cursor:pointer; font-size:14px; padding:0 4px; flex-shrink:0 }
+  .ampel-edit .mini-del{ width:24px; height:24px; border:1px solid var(--line); border-radius:5px; background:#fff; font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; padding:0 }
+  .ampel-edit .mini-del:hover{ background:var(--danger); border-color:var(--danger); color:#fff }
+
+  .prog-toggle{ display:flex; align-items:center; gap:9px; padding:8px 10px; border:1px solid var(--line); border-radius:6px; margin-bottom:6px; cursor:pointer; font-size:12.5px; font-weight:600; user-select:none }
+  .prog-toggle input{ width:auto; accent-color:var(--fog-deep) }
+  .prog-cat{ font-size:9px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; color:var(--steel); margin:14px 0 7px; padding-bottom:5px; border-bottom:1px solid var(--line) }
+  .prog-cat:first-child{ margin-top:0 }
+  .prog-toggle.on{ border-color:var(--fog-deep); background:var(--cloud) }
+  .prog-block{ border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px; background:var(--cloud) }
+  .prog-block .pbh{ font-size:12.5px; font-weight:800; color:var(--ink); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between }
+  .prog-block .pbh .rec-lab{ font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--sand) }
+  .ms-edit{ display:flex; align-items:center; gap:6px; margin-bottom:5px }
+  .ms-edit select{ flex:1; font-size:11.5px; padding:5px 7px }
+  .ms-edit select.badge-sel{ flex:0 0 90px }
+  .rec-check{ display:flex; align-items:center; gap:7px; font-size:11.5px; font-weight:600; color:var(--fog-deep); margin-bottom:10px; cursor:pointer }
+  .rec-check input{ width:auto; accent-color:var(--sand) }
+  .rec-lab{ font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--sand); margin-left:auto }
+  .beg-lbl{ font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--steel); margin:12px 0 6px; display:block }
+  .beg-ms{ border:1px solid var(--line); border-radius:8px; padding:9px 9px 8px; margin-bottom:8px; background:var(--cloud) }
+  .beg-ms-top{ display:flex; gap:6px; align-items:center; margin-bottom:7px }
+  .beg-name{ flex:1; min-width:0; padding:6px 8px; font-size:12px; border:1px solid var(--line); border-radius:6px; font-family:var(--font-sans); background:#fff; color:var(--ink) }
+  .beg-badge{ flex:0 0 72px; padding:6px 3px; font-size:11px; border:1px solid var(--line); border-radius:6px; background:#fff }
+  .beg-ms-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:6px }
+  .beg-ms-grid label{ display:flex; flex-direction:column; gap:3px; font-size:8px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; color:var(--steel) }
+  .beg-ms-grid input{ padding:5px 6px; font-size:12px; border:1px solid var(--line); border-radius:5px; font-family:var(--font-sans); width:100%; box-sizing:border-box; background:#fff }
+  .beg-calc{ padding:5px 6px; font-size:13px; font-weight:700; color:var(--fog-deep); background:#fff; border:1px solid var(--line-soft); border-radius:5px; font-family:var(--font-serif); min-height:27px; display:flex; align-items:center }
+  .beg-note{ width:100%; padding:5px 7px; font-size:11px; border:1px solid var(--line); border-radius:5px; font-family:var(--font-sans); box-sizing:border-box; background:#fff }
+  .beg-heiz{ display:flex; align-items:center; gap:6px; font-size:10px; color:var(--steel-dk); margin:2px 0; cursor:pointer }
+  .beg-heiz input{ width:auto; accent-color:var(--fog-deep) }
+  .beg-heiz-note{ color:var(--danger); font-weight:700 }
+  .beg-pool-note{ font-size:9.5px; color:var(--steel); margin:2px 0 4px; font-style:italic; line-height:1.4 }
+  .beg-totals{ margin-top:11px; border:1px solid var(--fog-deep); border-radius:9px; padding:11px 13px; background:var(--cloud) }
+  .beg-tot-row{ display:flex; justify-content:space-between; align-items:baseline; font-size:12px; padding:4px 0; color:var(--ink) }
+  .beg-tot-row.nowrap{ flex-wrap:nowrap; gap:8px }
+  .beg-tot-row.nowrap span{ white-space:nowrap }
+  .beg-tot-row.nowrap span small{ display:block; font-size:9.5px; font-weight:400; color:var(--steel); white-space:nowrap }
+  .beg-tot-row span{ font-weight:600 }
+  .beg-tot-row b{ font-family:var(--font-serif); font-size:15px; letter-spacing:-.3px }
+  .beg-tot-row b.pos{ color:var(--pos) }
+  .beg-tot-row.sum{ border-top:2px solid var(--ink); margin-top:5px; padding-top:9px }
+  .beg-tot-row.sum span{ text-transform:uppercase; letter-spacing:1px; font-size:10px; font-weight:700 }
+  .beg-tot-row.sum b{ color:var(--fog-deep); font-size:19px }
+  .beg-tot-row.cap span, .beg-tot-row.cap b{ color:var(--warn) }
+  .beg-cap-note{ margin-top:9px; padding:8px 10px; border-radius:6px; background:#fbf1dc; border:1px solid #e6c88a; font-size:10px; line-height:1.45; color:#7a5a12 }
+  .beg-cap-note b{ font-weight:800 }
+  .doc-cap-note{ margin-top:10px; padding:10px 13px; border-radius:9px; background:#fbf1dc; border:1px solid #e6c88a; font-size:10.5px; line-height:1.5; color:#6e5410 }
+  .doc-cap-note b{ font-weight:800; color:#4a3806 }
+  .isfp{ margin-top:7mm; background:var(--ink); border-radius:14px; padding:20px 24px; display:flex; align-items:center; gap:22px; color:#fff }
+  .isfp-txt{ flex:1 }
+  .isfp-h{ font-size:14px; font-weight:800; letter-spacing:-.2px; margin-bottom:6px; color:#fff }
+  .isfp-txt p{ font-size:11px; line-height:1.5; color:var(--fog); max-width:118mm }
+  .isfp-txt p b{ color:var(--sand); font-weight:700 }
+  .isfp-btn{ flex-shrink:0; background:var(--sand); color:var(--ink); font-weight:700; font-size:12.5px; padding:13px 20px; border-radius:8px; text-decoration:none; white-space:nowrap; transition:filter .15s }
+  .isfp-btn:hover{ filter:brightness(1.06) }
+  .isfp-txt p a{ color:var(--sand); text-decoration:underline; font-weight:700 }
+  .isfp-txt p a:hover{ color:#fff }
+  /* ---- Fazit-Seite ---- */
+  .fazit-body{ max-width:172mm }
+  .fazit-lead{ font-size:12.5px; line-height:1.6; color:var(--ink); margin-bottom:14px }
+  .fazit-text{ font-size:12.5px; line-height:1.6; color:var(--steel-dk); margin-bottom:16px }
+  .fazit-disc{ font-size:9.5px; line-height:1.5; color:var(--mute); border-top:1px solid var(--line); padding-top:10px; max-width:150mm }
+  .gloss{ display:grid; grid-template-columns:1fr 1fr; gap:0 26px; margin-top:2mm }
+  .gloss-col{ display:flex; flex-direction:column }
+  .gl{ padding:9px 0; border-top:1px solid var(--line-soft) }
+  .gl:first-child{ border-top:none }
+  .gl dt{ font-family:var(--font-sans); font-size:11.5px; font-weight:800; letter-spacing:-.2px; color:var(--ink); margin-bottom:3px }
+  .gl dd{ font-size:9.7px; line-height:1.5; color:var(--steel-dk); margin:0 }
+  .gl dd b{ font-weight:700; color:var(--ink); font-family:var(--font-mono); font-size:9.2px }
+  .sign-block{ margin-top:auto; display:flex; justify-content:space-between; align-items:flex-end; gap:40px; padding-top:16px }
+  .sign-left{ flex:1; min-width:0 }
+  .sign-ort{ font-size:11px; color:var(--steel-dk); margin-bottom:6px }
+  .sign-img{ max-height:64px; max-width:230px; display:block; margin-bottom:2px }
+  .sign-space{ height:64px }
+  .sign-line{ width:230px; border-top:1.5px solid var(--ink); margin-bottom:7px }
+  .sign-name{ font-size:13px; font-weight:800; letter-spacing:-.2px; color:var(--ink) }
+  .sign-fn{ font-size:10px; color:var(--steel); margin-top:2px }
+  .sign-right{ flex-shrink:0 }
+  .stamp-img{ max-height:150px; max-width:200px; display:block }
+  .stamp{ transform:rotate(-7deg) }
+  .stamp-ring{ width:138px; height:138px; border-radius:50%; box-shadow:0 0 0 2px var(--fog-deep), 0 0 0 4px var(--cloud), 0 0 0 6px var(--fog-deep); display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--fog-deep); text-align:center; opacity:.8 }
+  .stamp-top{ font-family:var(--font-mono); font-size:7px; letter-spacing:1.5px; font-weight:700 }
+  .stamp-mid{ font-family:var(--font-serif); font-weight:700; font-size:38px; letter-spacing:1px; line-height:.85; margin-top:3px }
+  .stamp-sub{ font-family:var(--font-sans); font-size:11px; font-weight:800; letter-spacing:4px; margin-top:1px }
+  .stamp-bot{ font-family:var(--font-mono); font-size:7px; letter-spacing:2px; margin-top:6px; border-top:1px solid var(--fog-deep); padding-top:4px }
+  a{ color:var(--fog-deep) }
+  a:hover{ color:var(--ink) }
+  .ms-note{ font-size:10px; color:var(--steel); margin-top:2px; line-height:1.35 }
+  .ms-note.price{ font-family:var(--font-mono); font-size:8.5px; color:var(--fog-deep); letter-spacing:.2px; margin-top:3px }
+  .ms-cap{ color:var(--danger); font-weight:700 }
+
+  /* ============ DOKUMENT-BEREICH ============ */
+  .stage{ flex:1; overflow-y:auto; height:100vh; padding:26px 0; display:flex; flex-direction:column; align-items:center; gap:20px }
+
+  .page{ width:210mm; min-height:297mm; background:var(--cloud); padding:16mm 16mm 13mm; position:relative; box-shadow:0 6px 30px rgba(0,0,0,.16); display:flex; flex-direction:column; overflow:hidden; flex-shrink:0 }
+
+  .ph{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:11px }
+  .ph .kick{ font-family:var(--font-mono); font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--fog-deep); font-weight:700; margin-bottom:6px }
+  .ph h2{ font-size:25px; font-weight:800; letter-spacing:-.7px; line-height:1 }
+  .ph .obj{ font-family:var(--font-mono); font-size:8.5px; letter-spacing:.8px; color:var(--steel-dk); text-align:right; line-height:1.7 }
+  .ph .obj b{ color:var(--ink) }
+  .rule{ height:2px; background:var(--ink); margin-bottom:16px }
+  .sec-h{ font-family:var(--font-mono); font-size:9px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--fog-deep); margin-bottom:9px; display:flex; align-items:center; gap:9px }
+  .sec-h::after{ content:''; flex:1; height:1px; background:var(--line) }
+  .foot{ margin-top:auto; padding-top:9px; border-top:1px solid var(--line); display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:8px; letter-spacing:.8px; color:var(--mute) }
+
+  .cover{ padding:0; background:var(--ink) }
+  .cover-photo{ position:absolute; inset:0; overflow:hidden }
+  .cover-photo img{ width:100%; height:100%; object-fit:cover; display:block }
+  .cover-ph-empty{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--fog-deep); font-family:var(--font-mono); font-size:11px; letter-spacing:2px; text-transform:uppercase; background:repeating-linear-gradient(45deg,#dfe4ea,#dfe4ea 12px,#e7ebf0 12px,#e7ebf0 24px) }
+  .cover-scrim{ position:absolute; inset:0; background:linear-gradient(175deg, rgba(14,16,20,.42) 0%, rgba(14,16,20,.25) 40%, rgba(14,16,20,.78) 100%) }
+  .cover-inner{ position:relative; z-index:2; height:100%; min-height:297mm; display:flex; flex-direction:column; padding:18mm 16mm 14mm; color:#fff }
+  .cover-top{ display:flex; justify-content:space-between; align-items:flex-start }
+  .cover-top svg{ height:26px }
+  .cover-top svg path, .cover-top svg polygon{ fill:#fff }
+  .cover-top .az{ font-family:var(--font-mono); font-size:8.5px; letter-spacing:1.2px; text-transform:uppercase; text-align:right; line-height:1.7; color:rgba(255,255,255,.8) }
+  .cover-mid{ margin-top:auto }
+  .cover-kick{ font-family:var(--font-mono); font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--sand); font-weight:700; margin-bottom:16px }
+  .cover-mid h1{ font-size:74px; font-weight:800; letter-spacing:-2.5px; line-height:.95; margin-bottom:20mm }
+  .cover-obj{ display:flex; align-items:flex-end; gap:14px; padding-top:16px; border-top:1px solid rgba(255,255,255,.28) }
+  .cover-obj .adr{ font-family:var(--font-serif); font-style:italic; font-weight:700; font-size:26px; letter-spacing:-.4px; line-height:1 }
+  .cover-obj .sub{ font-family:var(--font-mono); font-size:9px; letter-spacing:1px; color:rgba(255,255,255,.75); margin-left:auto; text-align:right; line-height:1.7 }
+
+  .split{ display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-radius:16px; overflow:hidden; background:var(--white); margin-bottom:8mm }
+  .split-col{ padding:20px 24px 22px }
+  .split-col.now{ background:var(--cloud-2) }
+  .split-col.goal{ background:linear-gradient(180deg,#eaf0f7 0%, #dce6f2 100%) }
+  .split-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px }
+  .split-head .lab{ font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase }
+  .split-col.now .lab{ color:var(--steel) } .split-col.goal .lab{ color:var(--fog-deep) }
+  .split-head .kls{ font-family:var(--font-serif); font-weight:700; font-size:34px; line-height:.8; letter-spacing:-1px }
+  .split-col.now .kls{ color:var(--danger) } .split-col.goal .kls{ color:var(--fog-deep) }
+  .metric{ padding:11px 0; border-top:1px solid rgba(14,16,20,.08) }
+  .metric:first-of-type{ border-top:none }
+  .metric .ml{ font-size:9.5px; color:var(--steel); letter-spacing:.3px; margin-bottom:3px }
+  .metric .mv{ font-family:var(--font-serif); font-weight:700; font-size:23px; letter-spacing:-.5px; line-height:1 }
+  .metric .mu{ font-size:9.5px; color:var(--steel); font-weight:500; margin-left:2px }
+  .split-col.now .mv{ color:var(--ink) } .split-col.goal .mv{ color:var(--fog-deep) }
+  .delta{ display:inline-block; margin-left:8px; font-size:11px; font-weight:700; color:var(--pos); letter-spacing:-.2px; vertical-align:2px }
+  .metric .msub{ font-size:10px; color:var(--steel); font-family:var(--font-mono); letter-spacing:.2px; margin-top:3px }
+  .split-col.goal .metric .msub{ color:var(--fog-deep) }
+  .dv-t{ display:block; font-family:var(--font-serif); font-weight:700; font-size:14px; letter-spacing:-.3px; color:var(--ink); line-height:1.1 }
+  .cmp-r .c.rec .dv-t{ color:var(--fog-deep) }
+  .dv-m{ display:block; font-size:8.5px; color:var(--steel); font-family:var(--font-mono); letter-spacing:.1px; margin-top:2px }
+
+  .eek{ display:flex; gap:3px; height:26px; margin-bottom:7px }
+  .eek .sl{ flex:1; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#fff; border-radius:3px; opacity:.28; position:relative }
+  .eek .sl[data-c="A"]{background:var(--e-A)} .eek .sl[data-c="B"]{background:var(--e-B)} .eek .sl[data-c="C"]{background:var(--e-C);color:#2a3400} .eek .sl[data-c="D"]{background:var(--e-D);color:#3a2a00} .eek .sl[data-c="E"]{background:var(--e-E)} .eek .sl[data-c="F"]{background:var(--e-F)} .eek .sl[data-c="G"]{background:var(--e-G)} .eek .sl[data-c="H"]{background:var(--e-H)}
+  .eek .sl.on{ opacity:1 }
+  .eek .sl.from{ opacity:1; box-shadow:inset 0 0 0 2px rgba(14,16,20,.35) }
+  .eek .sl.to{ opacity:1; box-shadow:inset 0 0 0 2.5px var(--ink) }
+  .eek .sl.to::after{ content:'▲'; position:absolute; bottom:-13px; left:50%; transform:translateX(-50%); font-size:8px; color:var(--ink) }
+  .eek-cap{ display:flex; align-items:center; gap:9px; font-size:10px; color:var(--steel-dk); margin-top:10px }
+  .wpb-badge{ margin-top:12px; display:flex; align-items:flex-start; gap:14px; background:#fbecea; border-left:3px solid var(--danger); border-radius:0 10px 10px 0; padding:13px 16px }
+  .wpb-tag{ flex-shrink:0; background:var(--danger); color:#fff; font-size:9.5px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; padding:6px 11px; border-radius:5px; margin-top:1px }
+  .wpb-badge p{ font-size:10.5px; line-height:1.5; color:var(--ink) }
+  .wpb-badge p b{ font-weight:800; color:var(--danger) }
+  .eek-cap .f{ font-family:var(--font-serif); font-weight:700; color:var(--danger); font-size:13px }
+  .eek-cap .t{ font-family:var(--font-serif); font-weight:700; color:var(--pos); font-size:13px }
+  .eek-cap .arr{ color:var(--steel) }
+
+  .ampel{ display:grid; grid-template-columns:1fr 1fr; gap:8mm; margin-top:3mm }
+  .ampel-group h4{ font-size:11px; font-weight:800; letter-spacing:-.2px; margin-bottom:10px; color:var(--ink) }
+  .ampel-row{ display:flex; align-items:center; gap:11px; padding:8px 0; border-top:1px solid var(--line-soft) }
+  .ampel-row:first-of-type{ border-top:none }
+  .dot{ width:11px; height:11px; border-radius:50%; flex-shrink:0 }
+  .dot.r{ background:var(--danger) } .dot.y{ background:var(--warn) } .dot.g{ background:var(--pos) }
+  .ampel-row .bt{ font-size:11px; font-weight:600; color:var(--ink); flex:1 }
+  .ampel-row .st{ font-size:9.5px; color:var(--steel); font-family:var(--font-mono); letter-spacing:.3px }
+
+  .cmp{ background:var(--white); border:1px solid var(--line); border-radius:14px; overflow:hidden; flex:1; display:flex; flex-direction:column }
+  .cmp-head{ display:grid; background:var(--ink) }
+  .cmp-head .c{ padding:15px 13px 14px; color:#fff; border-right:1px solid rgba(255,255,255,.1) }
+  .cmp-head .c:last-child{ border-right:none }
+  .cmp-head .pt{ font-family:var(--font-mono); font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:var(--fog); margin-bottom:5px }
+  .cmp-head .pn{ font-size:14px; font-weight:800; letter-spacing:-.3px; line-height:1.05 }
+  .cmp-head .c.rec{ background:var(--fog-deep); position:relative }
+  .cmp-body{ flex:1; display:flex; flex-direction:column }
+  .cmp-r{ display:grid; border-top:1px solid var(--line-soft); flex:1 }
+  .cmp-r .c{ padding:10px 13px; border-right:1px solid var(--line-soft); display:flex; flex-direction:column; justify-content:center }
+  .cmp-r .c:last-child{ border-right:none }
+  .cmp-r .c.rl{ background:var(--cloud); font-size:9.5px; font-weight:700; color:var(--fog-deep); letter-spacing:.2px; text-transform:uppercase }
+  .cmp-r .c.rec{ background:rgba(213,220,230,.28) }
+  .fig{ font-family:var(--font-serif); font-weight:700; font-size:16px; letter-spacing:-.4px; color:var(--ink); line-height:1 }
+  .fig.fog{ color:var(--fog-deep) } .fig.pos{ color:var(--pos) }
+  .cs{ display:block; font-size:8.5px; color:var(--steel); font-weight:500; margin-top:3px; letter-spacing:0 }
+  .mrow{ display:flex; gap:4px; flex-wrap:wrap }
+  .mrow.dense{ gap:3px }
+  .mrow.dense .mchip{ font-size:7px; padding:1px 4px; letter-spacing:.2px }
+  .cmp-dense .cmp-head .c{ padding:12px 9px 11px }
+  .cmp-dense .cmp-head .pn{ font-size:12px }
+  .cmp-dense .cmp-r .c{ padding:9px }
+  .cmp-dense .fig{ font-size:15px }
+  .cmp-dense .cs{ font-size:8.5px }
+  .cmp-xdense .cmp-head .c{ padding:10px 7px 9px }
+  .cmp-xdense .cmp-head .pn{ font-size:10.5px }
+  .cmp-xdense .cmp-head .pt{ font-size:7px; letter-spacing:1px }
+  .cmp-xdense .cmp-r .c{ padding:7px 6px }
+  .cmp-xdense .cmp-r .rl{ font-size:9px }
+  .cmp-xdense .fig{ font-size:13px }
+  .cmp-xdense .cs{ font-size:8px }
+  .cmp-xdense .mchip{ font-size:6.5px; padding:1px 3px }
+  .mchip{ font-size:8px; font-weight:700; padding:2px 6px; border-radius:3px; letter-spacing:.3px; background:var(--fog); color:var(--fog-deep) }
+  .gzw-facts{ display:grid; grid-template-columns:1fr 1fr; gap:9px 22px; margin:6px 0 14px }
+  .gzw-fact{ border-top:1px solid var(--line-soft); padding-top:6px }
+  .gzw-fact .fl{ font-size:9px; text-transform:uppercase; letter-spacing:.3px; color:var(--steel); margin-bottom:2px }
+  .gzw-fact .fv{ font-size:11px; color:var(--ink); font-weight:600; line-height:1.4 }
+  .gzw-banner{ margin-top:10px; background:#fff; border:1px dashed var(--fog-deep); border-radius:10px; padding:11px 15px; font-size:10.5px; line-height:1.5; color:var(--steel-dk) }
+  .gzw-banner b{ color:var(--ink) }
+  .gzw-banner-tag{ display:inline-block; background:var(--fog-deep); color:#fff; font-size:8.5px; font-weight:800; letter-spacing:.3px; text-transform:uppercase; padding:3px 7px; border-radius:5px; margin-right:6px }
+  .info-punkte{ display:grid; grid-template-columns:1fr 1fr; gap:7px 22px; margin:4px 0 14px }
+  .info-p{ font-size:10.5px; line-height:1.5; color:var(--steel-dk); padding-left:14px; position:relative }
+  .info-p::before{ content:''; position:absolute; left:0; top:6px; width:5px; height:5px; border-radius:50%; background:var(--fog-deep) }
+  .cmp-rec-badge{ display:inline-block; font-size:8px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--white); background:var(--sand); padding:3px 8px; border-radius:3px; margin-top:6px; width:fit-content }
+  .note{ font-family:var(--font-mono); font-size:8px; color:var(--mute); letter-spacing:.5px; margin-top:8px }
+
+  .d-lead{ font-family:var(--font-serif); font-style:italic; font-size:15px; line-height:1.35; color:var(--steel-dk); max-width:150mm; margin-bottom:8mm }
+  .d-grid{ display:grid; grid-template-columns:1fr 1fr; gap:9mm; flex:1 }
+  .ms{ display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--line-soft) }
+  .ms:first-of-type{ border-top:none }
+  .ms-n{ font-family:var(--font-serif); font-weight:700; font-size:14px; color:var(--fog-deep); width:26px; flex-shrink:0; letter-spacing:-.3px }
+  .ms-name{ font-size:11.5px; font-weight:700; color:var(--ink); letter-spacing:-.2px; display:flex; align-items:center; gap:7px; flex-wrap:wrap }
+  .ms-badge{ font-size:7.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:2px 6px; border-radius:3px }
+  .ms-badge.req{ background:var(--fog); color:var(--fog-deep) }
+  .ms-badge.opt{ background:var(--cloud-2); color:var(--steel) }
+  .kask{ background:var(--white); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:6mm }
+  .kask-row{ display:flex; justify-content:space-between; align-items:baseline; padding:11px 0; border-top:1px solid var(--line-soft); gap:10px }
+  .kask-row .kl{ white-space:nowrap }
+  .kask-row .kl small{ display:block; font-size:9px; font-weight:400; color:var(--steel); white-space:nowrap; margin-top:2px }
+  .kask-row:first-of-type{ border-top:none }
+  .kask-row .kl{ font-size:10px; color:var(--steel-dk); font-weight:600; letter-spacing:.2px }
+  .kask-row .kv{ font-family:var(--font-serif); font-weight:700; font-size:20px; letter-spacing:-.5px }
+  .kask-row.sum{ margin-top:4px; border-top:2px solid var(--ink); padding-top:13px }
+  .kask-row.sum .kl{ color:var(--ink); font-weight:700; text-transform:uppercase; font-size:10px; letter-spacing:1px }
+  .kask-row.sum .kv{ font-size:26px; color:var(--fog-deep) }
+  .kask-row .kv.pos{ color:var(--pos) }
+  .d-res{ display:grid; grid-template-columns:1fr 1fr; gap:9px }
+  .d-res .rc{ background:var(--white); border:1px solid var(--line); border-radius:10px; padding:14px 15px }
+  .d-res .rc.hl{ background:linear-gradient(180deg,#eaf0f7,#dce6f2); border-color:transparent }
+  .d-res .rl2{ font-size:8.5px; color:var(--steel); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:6px }
+  .d-res .rv{ font-family:var(--font-serif); font-weight:700; font-size:22px; letter-spacing:-.5px; line-height:1; color:var(--ink) }
+  .d-res .rc.hl .rv{ color:var(--fog-deep) }
+  .d-eek-mini{ margin-top:6mm }
+  .d-energy{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:7mm }
+  .en-card{ background:var(--white); border:1px solid var(--line); border-radius:10px; padding:13px 15px }
+  .en-card.hl{ background:linear-gradient(180deg,#eaf0f7,#dce6f2); border-color:transparent }
+  .en-l{ font-size:8.5px; color:var(--steel); text-transform:uppercase; letter-spacing:.5px; font-weight:700; margin-bottom:7px }
+  .en-t{ font-family:var(--font-serif); font-weight:700; font-size:21px; letter-spacing:-.5px; line-height:1; color:var(--ink) }
+  .en-card.hl .en-t{ color:var(--fog-deep) }
+  .en-u{ font-size:10px; font-weight:500; color:var(--steel); font-family:var(--font-sans) }
+  .en-m{ font-size:9.5px; color:var(--steel); font-family:var(--font-mono); letter-spacing:.2px; margin-top:5px }
+
+  @media print{
+    html,body{ background:#fff }
+    .panel{ display:none !important }
+    .stage{ height:auto; overflow:visible; padding:0; display:block }
+    .page{ width:210mm; height:297mm; min-height:0; margin:0; box-shadow:none; page-break-after:always; break-after:page }
+    .page:last-child{ page-break-after:auto }
+    .cover-inner{ min-height:0; height:297mm }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ EINGABE-PANEL ============ -->
+<div class="panel">
+  <div class="panel-head">
+    <div class="t">Fördermittelkompass<small>Eingabe · DGX · <span id="appStand"></span></small></div>
+  </div>
+  <div class="grp" id="projGrp">
+    <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Projekt</div>
+    <div class="grp-body">
+      <div class="fld"><label>Aktives Projekt</label><select id="projSelect" onchange="switchProject(this.value)"></select></div>
+      <div class="proj-btns">
+        <button type="button" onclick="newProject()">+ Neu</button>
+        <button type="button" onclick="duplicateProject()">Duplizieren</button>
+        <button type="button" onclick="renameProject()">Umbenennen</button>
+        <button type="button" onclick="deleteProject()">Löschen</button>
+      </div>
+      <div class="proj-btns">
+        <button type="button" onclick="exportProject()">Export (Datei)</button>
+        <button type="button" onclick="document.getElementById('projImportFile').click()">Import (Datei)</button>
+        <button type="button" onclick="exportProject();window.print()">↓ PDF</button>
+        <input type="file" id="projImportFile" accept="application/json" style="display:none" onchange="importProjectFile(this.files[0])">
+      </div>
+      <div class="hint" style="margin-top:6px">Projekte liegen im Browser-Speicher (begrenzt). Mit „Export" sicherst du ein Projekt dauerhaft als Datei auf deinem Rechner — unabhängig vom Browser-Limit.</div>
+    </div>
+  </div>
+
+  <!-- OBJEKT -->
+  <div class="grp">
+    <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Objekt &amp; Deckblatt</div>
+    <div class="grp-body">
+      <div class="fld"><label>Gebäudetyp</label>
+        <div class="typ-seg">
+          <button type="button" id="typWg"  onclick="setTyp('wg')">Wohngebäude</button>
+          <button type="button" id="typNwg" onclick="setTyp('nwg')">Nichtwohngebäude</button>
+        </div>
+      </div>
+      <div class="fld"><label>Objektadresse</label><input data-k="obj.adresse"></div>
+      <div class="row3">
+        <div class="fld"><label>PLZ</label><input data-k="obj.plz"></div>
+        <div class="fld" style="grid-column:span 2"><label>Ort</label><input data-k="obj.ort"></div>
+      </div>
+      <div class="fld"><label>Bundesland <span class="rec-lab" id="blAuto"></span></label>
+        <select id="blSel" onchange="setBundesland(this.value)"></select>
+        <div class="hint">Wird aus der PLZ vorgeschlagen. PLZ-Gebiete überschreiten teils Landesgrenzen — bei Grenzlagen bitte prüfen und ggf. korrigieren.</div>
+        <div class="hint" id="blWarn" style="display:none;color:var(--danger);font-weight:600"></div>
+      </div>
+      <div class="row3">
+        <div class="fld" id="feldWE"><label>Wohneinh.</label><input data-k="obj.we"></div>
+        <div class="fld"><label id="labQm">Fläche m²</label><input data-k="obj.qm"></div>
+        <div class="fld"><label>Baujahr</label><input data-k="obj.baujahr"></div>
+      </div>
+      <div id="feldNwgParams" style="display:none">
+        <div class="hint" style="margin-bottom:6px">Nichtwohngebäude — max. förderfähige Kosten je m² NGF:</div>
+        <div class="row2">
+          <div class="fld"><label>BEG Hülle €/m² NGF</label><input data-k="obj.begCapM2"></div>
+          <div class="fld"><label>KfW gesamt €/m² NGF</label><input data-k="obj.kfwCapM2"></div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label class="lab-gen">Aktenzeichen <button type="button" class="fld-gen" onclick="genAz()">⟳ Auto</button></label><input data-k="obj.az"></div>
+        <div class="fld"><label class="lab-gen">Datum <button type="button" class="fld-gen" onclick="genDatum()">⟳ Heute</button></label><input data-k="obj.datum"></div>
+      </div>
+      <label class="auto-toggle"><input type="checkbox" id="autoAz"> Aktenzeichen &amp; Datum automatisch aus Objektdaten pflegen</label>
+      <div class="fld">
+        <label>Deckblatt-Bild</label>
+        <div class="drop-zone" id="dropZone">Bild hierher ziehen oder klicken</div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none">
+        <div class="hint">Empfohlen: Hochformat, mind. 1200 px breit.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IST-ZUSTAND -->
+  <div class="grp">
+    <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Ist-Zustand &amp; Ziel</div>
+    <div class="grp-body">
+      <div class="hint" style="margin-bottom:10px">Alle Kennwerte werden <b>pro m² und Jahr</b> eingegeben. Der Jahres-Gesamtwert (kWh/a bzw. kg/a) wird automatisch aus der Fläche berechnet.</div>
+      <div class="row2">
+        <div class="fld"><label>Primärenergie Ist · kWh/m²a</label><input data-k="ist.peIst"></div>
+        <div class="fld"><label>Ziel</label><input data-k="ist.peZiel"></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label>Endenergie Ist · kWh/m²a</label><input data-k="ist.eeIst"></div>
+        <div class="fld"><label>Ziel</label><input data-k="ist.eeZiel"></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label>CO₂ Ist · kg/m²a</label><input data-k="ist.co2m2Ist"></div>
+        <div class="fld"><label>Ziel</label><input data-k="ist.co2m2Ziel"></div>
+      </div>
+      <div class="row2" id="feldEEK">
+        <div class="fld"><label>EEK Ist</label><select data-k="ist.eekIst" data-eek></select></div>
+        <div class="fld"><label>EEK Ziel</label><select data-k="ist.eekZiel" data-eek></select></div>
+      </div>
+      <div class="fld" id="feldWpb" style="margin-top:6px">
+        <label class="beg-heiz"><input type="checkbox" id="wpbChk" onchange="setWpb(this.checked)"> Worst Performing Building (WPB)</label>
+        <div class="hint" id="wpbTag"></div>
+      </div>
+      <div id="feldNwgHint" class="hint" style="display:none;margin-top:2px">Nichtwohngebäude: keine Energieeffizienzklassen — Bewertung erfolgt nutzungsabhängig über die Kennwerte und den Variantenvergleich.</div>
+      <div id="feldFarbe" style="display:none;margin-top:10px">
+        <div class="fld"><label>Bewertung heute (Farbe)</label><div class="farb-sw" id="farbeIstSw"></div></div>
+        <div class="fld"><label>Bewertung Zielvariante (Farbe)</label><div class="farb-sw" id="farbeZielSw"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AMPEL -->
+  <div class="grp closed">
+    <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Gebäude-Ampel</div>
+    <div class="grp-body">
+      <label style="font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--steel);margin-bottom:6px;display:block">Gebäudehülle</label>
+      <div id="ampelHuelle"></div>
+      <button class="mini-add" onclick="addAmpel('huelle')">+ Bauteil</button>
+      <label style="font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--steel);margin:14px 0 6px;display:block">Anlagentechnik</label>
+      <div id="ampelTechnik"></div>
+      <button class="mini-add" onclick="addAmpel('technik')">+ Bauteil</button>
+    </div>
+  </div>
+
+  <!-- PROGRAMME -->
+  <div class="grp">
+    <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Programme wählen</div>
+    <div class="grp-body">
+      <div id="progToggles"></div>
+      <div class="hint">Für die Vergleichstabelle 2–3 Programme empfohlen. Jedes gewählte Programm bekommt eine eigene Detailseite.</div>
+    </div>
+  </div>
+
+  <!-- PROGRAMM-DATEN -->
+  <div class="grp">
+    <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Programm-Daten</div>
+    <div class="grp-body" id="progBlocks"></div>
+  </div>
+
+  <!-- FAZIT -->
+  <div class="grp closed">
+    <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Fazit &amp; Unterschrift</div>
+    <div class="grp-body">
+      <div class="fld"><label>Einleitung (Standardtext)</label><textarea rows="4" data-k="fazit.lead"></textarea></div>
+      <div class="fld"><label>Fazit / Freitext</label><textarea rows="4" data-k="fazit.text"></textarea></div>
+      <div class="fld"><label>Rechtlicher Hinweis</label><textarea rows="3" data-k="fazit.disclaimer"></textarea></div>
+      <div class="row2">
+        <div class="fld"><label>Ort</label><input data-k="fazit.ort"></div>
+        <div class="fld"><label>Unterzeichner</label><input data-k="fazit.unterzeichner"></div>
+      </div>
+      <div class="fld"><label>Funktion / Zusatz</label><input data-k="fazit.funktion"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DOKUMENT ============ -->
+<div class="stage" id="stage"></div>
+
+<script>
+/* ---------- Kataloge ---------- */
+const EEK = ['A','B','C','D','E','F','G','H'];
+const NWG_FARBEN = ['#00A651','#5FAD31','#B1CC40','#F9E11E','#F6A623','#E98016','#D9483A','#B93027'];
+const MASSNAHMEN = [
+  'Fassadendämmung (WDVS)','Dachdämmung','Obergeschossdecke (OGD)','Fenster-/Türaustausch','Kellerdeckendämmung',
+  'Heizungstausch Wärmepumpe','Fernwärmeanschluss','Lüftung mit Wärmerückgewinnung',
+  'Photovoltaik-Anlage','Heizungsoptimierung (Effizienzverbesserung)','Heizungsoptimierung (Emissionsminderung)','Vollständige Hüllsanierung',
+  'Beleuchtung (LED-Umrüstung)','Kühlung / Klimatechnik','Gebäudeautomation / Smart Building'
+];
+const PROGRAMME_KATALOG_WG = [
+  {id:'beg',        name:'BEG Einzelmaßnahmen', typ:'Direktzuschuss'},
+  {id:'kfw85ee',    name:'KfW 85 EE',          typ:'Kredit + Tilgung'},
+  {id:'kfw70ee',    name:'KfW 70 EE',          typ:'Kredit + Tilgung'},
+  {id:'kfw70eewpb', name:'KfW 70 EE WPB',      typ:'Kredit + Tilgung'},
+  {id:'kfw55ee',    name:'KfW 55 EE',          typ:'Kredit + Tilgung'},
+  {id:'kfw55eewpb', name:'KfW 55 EE WPB',      typ:'Kredit + Tilgung'},
+  {id:'kfw40ee',    name:'KfW 40 EE',          typ:'Kredit + Tilgung'},
+  {id:'kfw40eewpb', name:'KfW 40 EE WPB',      typ:'Kredit + Tilgung'},
+  {id:'kfwdenkmalee', name:'KfW Denkmal EE',   typ:'Kredit + Tilgung'}
+];
+const PROGRAMME_KATALOG_NWG = [
+  {id:'beg',          name:'BEG Einzelmaßnahmen',  typ:'Direktzuschuss'},
+  {id:'kfw85eegzw',   name:'KfW 85 EE (für Gewerbe zu Wohnen)', typ:'Kredit + Tilgung'},
+  {id:'gzw',          name:'Gewerbe zu Wohnen',   typ:'Zusatzförderung'},
+  {id:'kfwegdenkmalee', name:'KfW EG Denkmal EE', typ:'Kredit + Tilgung'},
+  {id:'kfweg70ee',    name:'KfW EG 70 EE',       typ:'Kredit + Tilgung'},
+  {id:'kfweg70eewpb', name:'KfW EG 70 EE WPB',   typ:'Kredit + Tilgung'},
+  {id:'kfweg55ee',    name:'KfW EG 55 EE',       typ:'Kredit + Tilgung'},
+  {id:'kfweg55eewpb', name:'KfW EG 55 EE WPB',   typ:'Kredit + Tilgung'},
+  {id:'kfweg40ee',    name:'KfW EG 40 EE',       typ:'Kredit + Tilgung'},
+  {id:'kfweg40eewpb', name:'KfW EG 40 EE WPB',   typ:'Kredit + Tilgung'}
+];
+const PROGRAMME_KOMMUNAL_BERLIN = [
+  {id:'ibbsolarl', name:'IBB SolarPLUS L', typ:'Zuschuss · Land Berlin'},
+  {id:'ibbco2', name:'IBB CO2-Sparende Gebäude', typ:'Darlehen + Zuschuss · Berlin'},
+  {id:'ibbjunges', name:'IBB Junges Wohnen', typ:'Darlehen + Zuschuss · Berlin'},
+  {id:'ibbeffizienzhaus', name:'IBB Energetische Gebäudesanierung – Effizienzhaus', typ:'Zinsverbilligung · Berlin', info:true},
+  {id:'ibbeinzelmass', name:'IBB Energetische Gebäudesanierung – Einzelmaßnahmen', typ:'Zinsverbilligung · Berlin', info:true},
+  {id:'ibbneubaufonds', name:'IBB Wohnungsneubaufonds', typ:'Baudarlehen · Berlin', info:true},
+  {id:'ibbgenossenschaft', name:'IBB Genossenschaftsförderung – Neubau und Bestand', typ:'Zinsloses Darlehen · Berlin', info:true},
+  {id:'gruendachplus', name:'GründachPLUS', typ:'Zuschuss · Land Berlin', info:true}
+];
+const INFO_PROGRAMME = {
+  ibbeffizienzhaus:{
+    traeger:'Investitionsbank Berlin (IBB)', link:'https://www.ibb.de/de/foerderprogramme/ibb-energetische-gebaeudesanierung-effizienzhaus.html',
+    lead:'Förderdarlehen für Vermietende und Investoren, das den zinsgünstigen KfW-Kredit 261 mit einer zusätzlichen Zinssubvention des Landes Berlin kombiniert. Ziel ist die Komplettsanierung des Wohnungsbestands auf Effizienzhaus-Niveau.',
+    facts:[
+      ['Förderart','Förderdarlehen (KfW 261) mit IBB-Zinssubvention'],
+      ['Zinsvorteil','bis zu 0,6 % p.a. auf den KfW-Zinssatz'],
+      ['Kreditbetrag','bis zu 150.000 € je Wohneinheit'],
+      ['Tilgungszuschuss','bis zu 40 % · max. 60.000 € je Wohneinheit'],
+      ['Zielstandard','EH 40/55/70/85 sowie EH Denkmal, jeweils EE- oder NH-Klasse'],
+      ['Antragsberechtigt','Wohnungsunternehmen, Genossenschaften, Vermietende und Investoren; Standort Berlin'],
+      ['Objektvoraussetzung','Bauantrag/-anzeige liegt mind. 5 Jahre zurück'],
+      ['Kombination','mit weiteren öffentlichen Mitteln bis max. 60 % der förderfähigen Aufwendungen']
+    ],
+    punkte:['Komplettsanierung zum Effizienzhaus inkl. Baunebenkosten und Wiederherstellungskosten','Kauf einer frisch sanierten Wohnimmobilie','Sanierung eines Baudenkmals','Umwidmung beheizter Nichtwohnfläche in Wohnfläche','Baubegleitung und Nachhaltigkeitszertifizierung: je bis zu 40.000 € Kredit und 50 % Tilgungszuschuss','Extra-Tilgungszuschuss: 10 % für Worst Performing Buildings, 15 % für serielle Sanierung']
+  },
+  ibbeinzelmass:{
+    traeger:'Investitionsbank Berlin (IBB)', link:'https://www.ibb.de/de/foerderprogramme/ibb-energetische-gebaeudesanierung-einzelmassnahmen.html',
+    lead:'Ergänzungskredit zur BEG-Einzelmaßnahmen-Zuschussförderung: Die IBB reicht den KfW-Ergänzungskredit 359 mit einer zusätzlichen Zinssubvention des Landes Berlin aus. Sinnvoll, wenn Einzelmaßnahmen bereits über BAFA oder KfW bezuschusst sind und der Eigenanteil finanziert werden soll.',
+    facts:[
+      ['Förderart','Ergänzungsdarlehen (KfW 359) mit IBB-Zinssubvention'],
+      ['Zinsvorteil','bis zu 0,2 % p.a. auf den KfW-Zinssatz'],
+      ['Kreditbetrag','bis zu 120.000 € je Wohneinheit'],
+      ['Voraussetzung','bewilligter BAFA-/KfW-Zuschuss nach BEG EM, nicht älter als 12 Monate'],
+      ['Antragsfrist','innerhalb von 12 Monaten nach Zusage der Zuschussförderung'],
+      ['Antragsberechtigt','Wohnungsunternehmen, Genossenschaften, Vermietende und Investoren; Standort Berlin'],
+      ['Objektvoraussetzung','Bauantrag/-anzeige liegt mind. 5 Jahre zurück'],
+      ['Konditionen','bis zu 5 Tilgungsfreijahre, 100 % Auszahlung, vorzeitige Rückzahlung ohne Vorfälligkeitsentgelt']
+    ],
+    punkte:['Dämmung der Gebäudehülle (Außenwand, Dach)','Erneuerung oder erstmaliger Einbau von Fenstern und Außentüren','Einbau raumlufttechnischer Anlagen','Errichtung, Umbau oder Erweiterung eines Gebäudenetzes','Heizungsoptimierung','Baunebenkosten und Wiederherstellungskosten']
+  },
+  ibbneubaufonds:{
+    traeger:'Investitionsbank Berlin (IBB)', link:'https://www.ibb.de/de/foerderprogramme/ibb-wohnungsneubaufonds.html',
+    lead:'Das zentrale Berliner Programm zur Schaffung mietpreis- und belegungsgebundenen Wohnraums im Neubau. Gefördert wird über zinsgünstige öffentliche Baudarlehen und ergänzende Zuschüsse; im Gegenzug gelten Mietobergrenzen und Belegungsbindungen nach den Wohnungsbauförderungsbestimmungen (WFB).',
+    facts:[
+      ['Förderart','öffentliches Baudarlehen mit ergänzenden Zuschüssen'],
+      ['Ziel','Neubau mietpreis- und belegungsgebundener Wohnungen in Berlin'],
+      ['Antragsberechtigt','Wohnungsunternehmen, Genossenschaften, Bauträger und Investoren; Standort Berlin'],
+      ['Bindung','Mietpreis- und Belegungsbindung nach WFB; Belegung an Einkommensgrenzen (WBS) gebunden'],
+      ['Verfahren','Aufnahme über die Programmleitstelle der Senatsverwaltung, anschließend Antrag bei der IBB'],
+      ['Kombination','Grundlage für die IBB Genossenschaftsförderung und kombinierbar mit KfW-Neubauprogrammen'],
+      ['Zeitpunkt','Antrag vor Vorhabensbeginn; Planungsleistungen gelten nicht als Beginn'],
+      ['Konditionen','maßgeblich sind die jeweils geltenden Wohnungsbauförderungsbestimmungen']
+    ],
+    punkte:['Neubau von Mietwohnungen mit Miet- und Belegungsbindung','Ergänzende Zuschusskomponenten je nach Förderweg','Kombinierbar mit dem IBB Förderergänzungsdarlehen','Kombinierbar mit Klimafreundlicher Neubau (KfW 297/298)','Für Genossenschaften Voraussetzung der IBB Genossenschaftsförderung (mind. 30 % der Wohnungen)']
+  },
+  ibbgenossenschaft:{
+    traeger:'Investitionsbank Berlin (IBB)', link:'https://www.ibb.de/de/foerderprogramme/ibb-genossenschaftsfoerderung-neubau-bestand.html',
+    lead:'Zinsloses Eigenkapitalergänzungs- bzw. Erwerbsdarlehen des Landes Berlin für Wohnungsbaugenossenschaften — sowohl für den Neubau als auch für den Erwerb von Bestandsgebäuden, etwa durch von Mietenden gegründete Genossenschaften.',
+    facts:[
+      ['Förderart','zinsloses, nachrangig besichertes Darlehen'],
+      ['Laufzeit','bis zu 40 Jahre, Tilgung mind. 1,0 % p.a.'],
+      ['Neubau','max. 10 % der Gesamtkosten, höchstens 30.000 € je geschaffener Wohneinheit'],
+      ['Bestandserwerb','max. 90 % der auf den Wohnanteil entfallenden Kosten, höchstens 3.500 €/m² Wohnfläche'],
+      ['Extra im Erhaltungsgebiet','zusätzlicher Zuschuss von 10 % des Kaufpreises (§ 173 BauGB)'],
+      ['Antragsberechtigt','Wohnungsbaugenossenschaften (e.G.) und Genossenschaften in Gründung (i.G.)'],
+      ['Bindung','40 Jahre; Anfangsmiete 7,00 €/m², Fortschreibung ab Jahr 6 mit 2 % p.a.'],
+      ['Voraussetzung Neubau','Kombination mit dem IBB Wohnungsneubaufonds für mind. 30 % der Wohnungen']
+    ],
+    punkte:['Neubauvorhaben von Genossenschaften in Berlin','Erwerb von Bestandsgebäuden durch bestehende oder neu gegründete Genossenschaften','Keine Bereitstellungszinsen, keine Vorfälligkeitsentschädigung','Verwaltungskostenbeitrag je nach Darlehensvolumen 0,15–0,6 % p.a.','Antrag zuerst bei der Programmleitstelle der Senatsverwaltung, danach bei der IBB']
+  },
+  gruendachplus:{
+    traeger:'IBB Business Team GmbH · Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt', link:'https://www.ibb-business-team.de/gruendachplus/',
+    lead:'Zuschussprogramm des Landes Berlin für die Begrünung von Dächern und Fassaden an Bestandsgebäuden. Gefördert wird gebäudebezogen als nicht rückzahlbarer Zuschuss — sinnvoll begleitend zu einer Dachsanierung, da Aufbau und Abdichtung ohnehin erneuert werden.',
+    facts:[
+      ['Förderart','nicht rückzahlbarer Zuschuss, gebäudebezogen einmalig'],
+      ['Dachbegrünung','ab 100 m² Vegetationsfläche je Gebäude'],
+      ['Fassadenbegrünung','bodengebunden ab 50 m², wandgebunden ab 10 m²'],
+      ['Förderfähige Gebäude','Wohngebäude, Büro- und Gewerbegebäude, Garagen- und Carportdächer'],
+      ['Fördergebiet','ausgewählte Innenstadtlagen mit schlechter Freiraumversorgung — PLZ-Prüfung erforderlich'],
+      ['Antragsberechtigt','Grundeigentümer, Verfügungs- und Erbbauberechtigte; mit Erlaubnis auch Vereine und Initiativen'],
+      ['Antragsweg','postalische Antragstellung bei der IBB Business Team GmbH'],
+      ['Kombination','mit SolarPLUS kombinierbar; Gründach-PV wird jedoch nicht doppelt gefördert']
+    ],
+    punkte:['Aufbau der Vegetationsfläche inkl. Durchwurzelungsschutz, Dräin-, Filter- und Vegetationstragschicht','Ansaaten, Pflanzungen und Fertigstellungspflege','Abflussverzögerung: Speicher-, Retentions- und Steuerungselemente','Absturzsicherungen, Rand- und Sicherheitsstreifen','Schichtaufbau zur Kombination von Gründach und Solardach','Rank- und Kletterhilfen, Fassadenbegrünungssysteme, Bewässerung','Nebenkosten für Planung, Bauleitung und Beratung']
+  }
+};
+function isInfoProg(id){ return !!INFO_PROGRAMME[id]; }
+function kumulierungHinweis(){
+  return `<div class="doc-cap-note"><b>Hinweis zur Kombination mit Bundesprogrammen:</b> Wird dieses Programm mit einer Bundesförderung (BEG bzw. BAFA) kombiniert, können pro Kostenposition höchstens <b>60 % der förderfähigen Kosten</b> gefördert werden.</div>`;
+}
+const IBBJW_MIN_PLAETZE = 20, IBBJW_ROLLI = 10000;
+function ibbjwCalc(){
+  const d=S.prog.ibbjunges||{};
+  const fl=_num(d.flaeche), plaetze=_num(d.plaetze);
+  const sD=_num(d.satzDarlehen), sZ=_num(d.satzZuschuss), sEh=_num(d.satzEh);
+  const darlehen=fl*sD, bauzuschuss=fl*sZ;
+  const zRolli=_num(d.nRolli)*IBBJW_ROLLI, zEh=_num(d.nEh)*sEh;
+  const zuschuss=bauzuschuss+zRolli+zEh;
+  return {fl, plaetze, sD, sZ, sEh, darlehen, bauzuschuss, zRolli, zEh, zuschuss, gesamt:darlehen+zuschuss, plaetzeOk: plaetze>=IBBJW_MIN_PLAETZE};
+}
+function recalcIbbjw(){
+  const d=S.prog.ibbjunges; if(!d) return;
+  const c=ibbjwCalc();
+  d.invest=_eur(c.gesamt); d.foerderung=_eur(c.zuschuss); d.netto=_eur(c.darlehen);
+  d.foerderNote='Baudarlehen 30 Jahre zinslos + Zuschüsse';
+  d.kask=[{l:'Zinsloses Baudarlehen', v:_eur(c.darlehen)}, {l:'Baukostenzuschuss', v:_eur(c.bauzuschuss), pos:true}];
+  if(c.zRolli>0) d.kask.push({l:'Zuschuss rollstuhlgerechte Plätze', v:_eur(c.zRolli), pos:true});
+  if(c.zEh>0) d.kask.push({l:'Zuschuss Effizienzhaus-Mehrkosten', v:_eur(c.zEh), pos:true});
+}
+function ibbjwTotalsHtml(){
+  const c=ibbjwCalc();
+  let r=`<div class="beg-tot-row nowrap"><span>Baudarlehen · ${deNum(c.sD,0)} €/m²</span><b>${_eur(c.darlehen)}</b></div>
+    <div class="beg-tot-row nowrap"><span>Baukostenzuschuss · ${deNum(c.sZ,0)} €/m²</span><b class="pos">${_eur(c.bauzuschuss)}</b></div>`;
+  if(c.zRolli>0) r+=`<div class="beg-tot-row nowrap"><span>Rollstuhlgerechte Plätze</span><b class="pos">${_eur(c.zRolli)}</b></div>`;
+  if(c.zEh>0) r+=`<div class="beg-tot-row nowrap"><span>Effizienzhaus-Mehrkosten</span><b class="pos">${_eur(c.zEh)}</b></div>`;
+  r+=`<div class="beg-tot-row sum"><span>Gesamtförderung</span><b>${_eur(c.gesamt)}</b></div>`;
+  if(!c.plaetzeOk) r+=`<div class="beg-cap-note">Gefördert wird erst ab <b>${IBBJW_MIN_PLAETZE} Wohnplätzen</b> — aktuell ${c.plaetze||0}.</div>`;
+  return r;
+}
+window.editIbbjw=(k,v)=>{ S.prog.ibbjunges[k]=v; recalcIbbjw(); save(); renderDoc(); const t=document.getElementById('ibbjwtot'); if(t) t.innerHTML=ibbjwTotalsHtml(); };
+function ibbjwBlockHtml(p){
+  const d=S.prog.ibbjunges;
+  return `<div class="prog-block">
+    <div class="pbh">${esc(p.name)} <span class="rec-lab">Berlin</span></div>
+    <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editIbbjw('lead',this.value)">${esc(d.lead||'')}</textarea></div>
+    <div class="row2">
+      <div class="fld"><label>Geförderte Fläche m²</label><input value="${esc(d.flaeche||'')}" placeholder="0" oninput="editIbbjw('flaeche',this.value)"></div>
+      <div class="fld"><label>Wohnplätze <span class="rec-lab">min. ${IBBJW_MIN_PLAETZE}</span></label><input value="${esc(d.plaetze||'')}" placeholder="0" oninput="editIbbjw('plaetze',this.value)"></div>
+    </div>
+    <div class="row2">
+      <div class="fld"><label>Baudarlehen €/m² <span class="rec-lab">max. 3.600</span></label><input value="${esc(d.satzDarlehen||'')}" oninput="editIbbjw('satzDarlehen',this.value)"></div>
+      <div class="fld"><label>Baukostenzuschuss €/m² <span class="rec-lab">max. 2.200</span></label><input value="${esc(d.satzZuschuss||'')}" oninput="editIbbjw('satzZuschuss',this.value)"></div>
+    </div>
+    <div class="row3">
+      <div class="fld"><label>Rollstuhlger. Plätze</label><input value="${esc(d.nRolli||'')}" placeholder="0" oninput="editIbbjw('nRolli',this.value)"></div>
+      <div class="fld"><label>Plätze mit EH-Standard</label><input value="${esc(d.nEh||'')}" placeholder="0" oninput="editIbbjw('nEh',this.value)"></div>
+      <div class="fld"><label>€ je Platz <span class="rec-lab">max. 5.000</span></label><input value="${esc(d.satzEh||'')}" oninput="editIbbjw('satzEh',this.value)"></div>
+    </div>
+    <div class="beg-totals" id="ibbjwtot">${ibbjwTotalsHtml()}</div>
+  </div>`;
+}
+function ibbjwMailto(){
+  const adr=[S.obj.adresse,S.obj.plzort].filter(Boolean).join(', ');
+  const subj='Anfrage: IBB Junges Wohnen (Berlin)';
+  const body=`Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr} möchte ich mich zum Berliner Förderprogramm „IBB Junges Wohnen“ beraten lassen und Unterstützung bei Vorbereitung und Antragstellung erhalten.\n\nBitte setzen Sie sich mit mir in Verbindung.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+function ibbjwDetailHtml(p,d,i,total){
+  const c=ibbjwCalc();
+  return `<div class="page">
+    <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)} · Kommunale Förderung</div><h2>IBB Junges Wohnen.</h2></div>
+      <div class="obj"><b>${esc(p.typ)}</b><br>Investitionsbank Berlin<br>${esc(S.obj.plzort)}</div></div>
+    <div class="rule"></div>
+    <div class="d-lead">${esc(d.lead||'')}</div>
+    <div class="sec-h">Kurzübersicht Bedingungen</div>
+    <div class="gzw-facts">
+      <div class="gzw-fact"><div class="fl">Baudarlehen</div><div class="fv">Zinslos, 30 Jahre · bis zu 3.600 €/m² geförderter Fläche</div></div>
+      <div class="gzw-fact"><div class="fl">Baukostenzuschuss</div><div class="fv">Bis zu 2.200 €/m² geförderter Fläche</div></div>
+      <div class="gzw-fact"><div class="fl">Einmalige Zuschüsse</div><div class="fv">10.000 € je rollstuhlgerechtem Wohnplatz · bis 5.000 € je Platz für Effizienzhaus-Mehrkosten</div></div>
+      <div class="gzw-fact"><div class="fl">Mindestgröße</div><div class="fv">Ab ${IBBJW_MIN_PLAETZE} Wohnplätzen im Land Berlin</div></div>
+      <div class="gzw-fact"><div class="fl">Gefördert wird</div><div class="fv">Neubau sowie Nutzungsänderung oder Erweiterung (wesentlicher Bauaufwand ab 1.500 €/m²), inkl. Erstmöblierung</div></div>
+      <div class="gzw-fact"><div class="fl">Zielgruppe</div><div class="fv">Studierende und Auszubildende · WBS mit Einkommensgrenze 140 %</div></div>
+      <div class="gzw-fact"><div class="fl">Bindung</div><div class="fv">30 Jahre · Bruttokaltmiete max. 320 € je Wohnplatz zzgl. max. 60 € Aufschläge</div></div>
+      <div class="gzw-fact"><div class="fl">Konditionen</div><div class="fv">Eigenkapital i. d. R. 20 % · Tilgung mind. 1,5 % p.a. · Verwaltungskostenbeitrag 0,15–0,6 % p.a.</div></div>
+    </div>
+    <div class="d-grid">
+      <div>
+        <div class="sec-h">Rechenweg</div>
+        <div class="ms"><div class="ms-n">1</div><div><div class="ms-name">Geförderte Fläche</div><div class="ms-note">${c.fl?deNum(c.fl,0)+' m²':'—'} · ${c.plaetze||0} Wohnplätze${c.plaetzeOk?'':` · <span class="ms-cap">unter der Mindestgröße von ${IBBJW_MIN_PLAETZE}</span>`}</div></div></div>
+        <div class="ms"><div class="ms-n">2</div><div><div class="ms-name">Zinsloses Baudarlehen</div><div class="ms-note price">${deNum(c.fl,0)} m² × ${deNum(c.sD,0)} € = ${_eur(c.darlehen)}</div></div></div>
+        <div class="ms"><div class="ms-n">3</div><div><div class="ms-name">Baukostenzuschuss</div><div class="ms-note price">${deNum(c.fl,0)} m² × ${deNum(c.sZ,0)} € = ${_eur(c.bauzuschuss)}</div></div></div>
+        ${c.zRolli>0?`<div class="ms"><div class="ms-n">4</div><div><div class="ms-name">Rollstuhlgerechte Wohnplätze</div><div class="ms-note price">${_num(d.nRolli)} × ${_eur(IBBJW_ROLLI)} = ${_eur(c.zRolli)}</div></div></div>`:''}
+        ${c.zEh>0?`<div class="ms"><div class="ms-n">${c.zRolli>0?5:4}</div><div><div class="ms-name">Effizienzhaus-Mehrkosten</div><div class="ms-note price">${_num(d.nEh)} × ${_eur(c.sEh)} = ${_eur(c.zEh)}</div></div></div>`:''}
+      </div>
+      <div>
+        <div class="sec-h">Förderrechnung</div>
+        <div class="kask">
+          ${(d.kask||[]).map(k=>`<div class="kask-row"><span class="kl">${esc(k.l)}</span><span class="kv${k.pos?' pos':''}">${esc(k.v)}</span></div>`).join('')}
+          <div class="kask-row sum"><span class="kl">Gesamtförderung</span><span class="kv">${_eur(c.gesamt)}</span></div>
+        </div>
+        <div class="doc-cap-note"><b>Hinweis:</b> Die Aufnahme erfolgt über die Programmleitstelle der Senatsverwaltung für Stadtentwicklung, Bauen und Wohnen; erst danach wird der Förderantrag bei der IBB gestellt. Die Mittelvergabe steht unter dem Vorbehalt verfügbarer Haushaltsmittel — die Nachfrage ist derzeit hoch.</div>
+      </div>
+    </div>
+    ${kumulierungHinweis()}
+    <div class="isfp">
+      <div class="isfp-txt">
+        <div class="isfp-h">Wir begleiten Sie gerne bei der Antragstellung</div>
+        <p>Von der Prüfung der baulichen Voraussetzungen über die Ermittlung der förderfähigen Flächen bis zur Abstimmung mit der Programmleitstelle und der IBB unterstützen wir Sie — inklusive der Kombination mit dem Wohnungsneubaufonds und den KfW-Neubauprogrammen.</p>
+      </div>
+      <a class="isfp-btn" href="${ibbjwMailto()}">Angebot anfragen →</a>
+    </div>
+    <div class="note"><a href="https://www.ibb.de/de/foerderprogramme/ibb-junges-wohnen.html" target="_blank" rel="noopener">Programmseite &amp; Verwaltungsvorschrift ansehen →</a></div>
+    ${footLine(4+i,total)}
+  </div>`;
+}
+const IBBCO2_SATZ = 20, IBBCO2_ZIEL = 15, IBBCO2_BONUS = 20;
+function ibbco2Calc(){
+  const d=S.prog.ibbco2||{};
+  const wfl=_num(d.wfl)||_qm();
+  const cIst=_num(d.co2Ist), cZiel=_num(d.co2Ziel);
+  const einsp=Math.max(0, cIst-cZiel);
+  const proM2=einsp*IBBCO2_SATZ;
+  const basis=proM2*wfl;
+  const bonus=d.bonus? basis*IBBCO2_BONUS/100 : 0;
+  return {wfl, cIst, cZiel, einsp, proM2, basis, bonus, darlehen:basis-bonus, gesamt:basis, zielOk: cZiel>0 && cZiel<=IBBCO2_ZIEL};
+}
+function recalcIbbco2(){
+  const d=S.prog.ibbco2; if(!d) return;
+  const c=ibbco2Calc();
+  d.invest=_eur(c.basis); d.foerderung=_eur(c.bonus); d.netto=_eur(c.darlehen);
+  d.foerderNote=`${IBBCO2_SATZ} € je kg CO₂e/m²`;
+  d.kask=[{l:'Förderfähige Darlehensbasis', v:_eur(c.basis)}];
+  if(d.bonus) d.kask.push({l:`Bonusmodul · ${IBBCO2_BONUS} % Zuschuss`, v:'− '+_eur(c.bonus), pos:true});
+}
+function ibbco2TotalsHtml(){
+  const c=ibbco2Calc();
+  let r=`<div class="beg-tot-row nowrap"><span>CO₂-Einsparung</span><b>${deNum(c.einsp,1)} kg/m²a</b></div>
+    <div class="beg-tot-row nowrap"><span>Darlehensbasis · ${IBBCO2_SATZ} €/kg/m²</span><b>${_eur(c.basis)}</b></div>`;
+  if(c.bonus>0) r+=`<div class="beg-tot-row nowrap"><span>Bonusmodul · ${IBBCO2_BONUS} % Zuschuss</span><b class="pos">${_eur(c.bonus)}</b></div>`;
+  r+=`<div class="beg-tot-row sum"><span>Darlehen (zinslos)</span><b>${_eur(c.darlehen)}</b></div>`;
+  if(!c.zielOk) r+=`<div class="beg-cap-note">Zielwert muss bei höchstens <b>${IBBCO2_ZIEL} kg CO₂e/m²a</b> liegen, sonst ist das Vorhaben nicht förderfähig.</div>`;
+  return r;
+}
+window.editIbbco2=(k,v)=>{ S.prog.ibbco2[k]=v; recalcIbbco2(); save(); renderDoc(); const t=document.getElementById('ibbco2tot'); if(t) t.innerHTML=ibbco2TotalsHtml(); };
+window.toggleIbbco2Bonus=(on)=>{ S.prog.ibbco2.bonus=on; recalcIbbco2(); save(); renderDoc(); renderProgBlocks(); };
+function ibbco2BlockHtml(p){
+  const d=S.prog.ibbco2, c=ibbco2Calc();
+  return `<div class="prog-block">
+    <div class="pbh">${esc(p.name)} <span class="rec-lab">Berlin</span></div>
+    <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editIbbco2('lead',this.value)">${esc(d.lead||'')}</textarea></div>
+    <div class="row3">
+      <div class="fld"><label>Wohnfläche m²</label><input value="${esc(d.wfl||'')}" placeholder="${esc(S.obj.qm)}" oninput="editIbbco2('wfl',this.value)"></div>
+      <div class="fld"><label>CO₂ Ist kg/m²a</label><input value="${esc(d.co2Ist||'')}" oninput="editIbbco2('co2Ist',this.value)"></div>
+      <div class="fld"><label>CO₂ Ziel kg/m²a</label><input value="${esc(d.co2Ziel||'')}" oninput="editIbbco2('co2Ziel',this.value)"></div>
+    </div>
+    <label class="beg-heiz"><input type="checkbox" ${d.bonus?'checked':''} onchange="toggleIbbco2Bonus(this.checked)"> Bonusmodul — Miet- und Belegungsbindung für die Hälfte der Wohnungen (${IBBCO2_BONUS} % Zuschuss)</label>
+    <div class="beg-totals" id="ibbco2tot">${ibbco2TotalsHtml()}</div>
+  </div>`;
+}
+function ibbco2Mailto(){
+  const adr=[S.obj.adresse,S.obj.plzort].filter(Boolean).join(', ');
+  const subj='Anfrage: IBB CO2-Sparende Gebäude (Berlin)';
+  const body=`Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr} möchte ich mich zum Berliner Förderprogramm „IBB CO2-Sparende Gebäude“ beraten lassen und Unterstützung bei Vorbereitung und Antragstellung erhalten.\n\nBitte setzen Sie sich mit mir in Verbindung.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+function ibbco2DetailHtml(p,d,i,total){
+  const c=ibbco2Calc();
+  return `<div class="page">
+    <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)} · Kommunale Förderung</div><h2>IBB CO2-Sparende Gebäude.</h2></div>
+      <div class="obj"><b>${esc(p.typ)}</b><br>Investitionsbank Berlin<br>${esc(S.obj.plzort)}</div></div>
+    <div class="rule"></div>
+    <div class="d-lead">${esc(d.lead||'')}</div>
+    <div class="sec-h">Kurzübersicht Bedingungen</div>
+    <div class="gzw-facts">
+      <div class="gzw-fact"><div class="fl">Grundmodul</div><div class="fv">Zinsloses Darlehen · ${IBBCO2_SATZ} € je eingespartem kg CO₂e und m² Wohnfläche</div></div>
+      <div class="gzw-fact"><div class="fl">Bonusmodul</div><div class="fv">${IBBCO2_BONUS} % Zuschuss auf das Darlehen gegen Miet- und Belegungsbindung</div></div>
+      <div class="gzw-fact"><div class="fl">Zielwert</div><div class="fv">Höchstens ${IBBCO2_ZIEL} kg CO₂e je m² Wohnfläche und Jahr nach Sanierung</div></div>
+      <div class="gzw-fact"><div class="fl">Objektvoraussetzung</div><div class="fv">Mietwohngebäude, älter als 20 Jahre, mind. 3 Wohneinheiten — Förderung nur für das gesamte Gebäude</div></div>
+      <div class="gzw-fact"><div class="fl">Maßnahmenwahl</div><div class="fv">Grundsätzlich frei — entscheidend ist das erreichte CO₂-Ergebnis</div></div>
+      <div class="gzw-fact"><div class="fl">Laufzeit</div><div class="fv">20 Jahre · Tilgung mind. 1,5 % p.a. · Verwaltungskostenbeitrag 0,55–1,5 % p.a.</div></div>
+      <div class="gzw-fact"><div class="fl">Bindung Grundmodul</div><div class="fv">Modernisierungsumlage auf max. 6 % der Kosten begrenzt, 20 Jahre</div></div>
+      <div class="gzw-fact"><div class="fl">Bindung Bonusmodul</div><div class="fv">Halbe Wohnungsanzahl, Nettokaltmiete max. 9,50 €/m², Zielgruppe WBS 180, 20 Jahre</div></div>
+    </div>
+    <div class="d-grid">
+      <div>
+        <div class="sec-h">Rechenweg</div>
+        <div class="ms"><div class="ms-n">1</div><div><div class="ms-name">CO₂-Ausstoss heute</div><div class="ms-note">${c.cIst?deNum(c.cIst,1)+' kg CO₂e/m²a':'—'}</div></div></div>
+        <div class="ms"><div class="ms-n">2</div><div><div class="ms-name">CO₂-Ausstoss nach Sanierung</div><div class="ms-note">${c.cZiel?deNum(c.cZiel,1)+' kg CO₂e/m²a':'—'}${c.zielOk?'':` · <span class="ms-cap">über dem Zielwert von ${IBBCO2_ZIEL} kg</span>`}</div></div></div>
+        <div class="ms"><div class="ms-n">3</div><div><div class="ms-name">Einsparung</div><div class="ms-note price">${deNum(c.einsp,1)} kg/m²a × ${IBBCO2_SATZ} € = ${_eur(c.proM2)} je m²</div></div></div>
+        <div class="ms"><div class="ms-n">4</div><div><div class="ms-name">Wohnfläche</div><div class="ms-note price">${deNum(c.wfl,0)} m² × ${_eur(c.proM2)} = ${_eur(c.basis)}</div></div></div>
+      </div>
+      <div>
+        <div class="sec-h">Förderrechnung</div>
+        <div class="kask">
+          ${(d.kask||[]).map(k=>`<div class="kask-row"><span class="kl">${esc(k.l)}</span><span class="kv${k.pos?' pos':''}">${esc(k.v)}</span></div>`).join('')}
+          <div class="kask-row sum"><span class="kl">Zinsloses Darlehen</span><span class="kv">${_eur(c.darlehen)}</span></div>
+        </div>
+        <div class="doc-cap-note"><b>Hinweis:</b> Der Zuschuss aus dem Bonusmodul reduziert den Darlehensbetrag — die Förderhöhe insgesamt bleibt ${_eur(c.basis)}. Der Zuschuss wird nach Prüfung des Verwendungsnachweises in einer Summe ausgezahlt.</div>
+      </div>
+    </div>
+    ${kumulierungHinweis()}
+    <div class="isfp">
+      <div class="isfp-txt">
+        <div class="isfp-h">Wir begleiten Sie gerne bei der Antragstellung</div>
+        <p>Voraussetzung ist ein aktueller Bedarfsausweis mit Effizienzklasse, Endenergiebedarf und Treibhausgasemissionen. Wir ermitteln die erreichbare CO₂-Einsparung, prüfen die Kombination mit den Bundesprogrammen und begleiten die Antragstellung bei der IBB.</p>
+      </div>
+      <a class="isfp-btn" href="${ibbco2Mailto()}">Angebot anfragen →</a>
+    </div>
+    <div class="note"><a href="https://www.ibb.de/de/foerderprogramme/ibb-co2-sparende-gebaeude.html" target="_blank" rel="noopener">Programmseite &amp; Verwaltungsvorschrift ansehen →</a></div>
+    ${footLine(4+i,total)}
+  </div>`;
+}
+function infoMailto(p){
+  const adr=[S.obj.adresse,S.obj.plzort].filter(Boolean).join(', ');
+  const subj=`Anfrage: ${p.name}`;
+  const body=`Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr} interessiere ich mich für das Förderprogramm „${p.name}“ und möchte wissen, ob und wie es sich mit den übrigen Programmen kombinieren lässt.\n\nBitte setzen Sie sich mit mir in Verbindung.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+function infoBlockHtml(p){
+  const d=S.prog[p.id]||{}, m=INFO_PROGRAMME[p.id];
+  return `<div class="prog-block">
+    <div class="pbh">${esc(p.name)} <span class="rec-lab">nur Erklärseite</span></div>
+    <div class="hint" style="margin-bottom:8px">Dieses Programm wird als reine Informationsseite ausgegeben — ohne eigene Förderberechnung.</div>
+    <div class="fld"><label>Einleitung (Detailseite)</label><textarea rows="4" oninput="editInfo('${p.id}','lead',this.value)">${esc(d.lead||m.lead)}</textarea></div>
+    <div class="fld"><label>Eigener Hinweis (optional)</label><input value="${esc(d.notiz||'')}" placeholder="z. B. Relevanz für dieses Objekt" oninput="editInfo('${p.id}','notiz',this.value)"></div>
+  </div>`;
+}
+window.editInfo=(id,k,v)=>{ S.prog[id][k]=v; save(); renderDoc(); };
+function infoDetailHtml(p,d,i,total){
+  const m=INFO_PROGRAMME[p.id];
+  return `<div class="page">
+    <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)} · Kommunale Förderung</div><h2>${esc(p.name)}.</h2></div>
+      <div class="obj"><b>${esc(p.typ)}</b><br>${esc(m.traeger)}</div></div>
+    <div class="rule"></div>
+    <div class="d-lead">${esc(d.lead||m.lead)}</div>
+    ${m.warnung?`<div class="doc-cap-note"><b>Aktueller Status:</b> ${esc(m.warnung)}</div>`:''}
+    <div class="sec-h">Kurzübersicht Bedingungen</div>
+    <div class="gzw-facts">
+      ${m.facts.map(f=>`<div class="gzw-fact"><div class="fl">${esc(f[0])}</div><div class="fv">${esc(f[1])}</div></div>`).join('')}
+    </div>
+    <div class="sec-h">Was gefördert wird</div>
+    <div class="info-punkte">
+      ${m.punkte.map(t=>`<div class="info-p">${esc(t)}</div>`).join('')}
+    </div>
+    ${d.notiz?`<div class="doc-cap-note"><b>Hinweis für dieses Objekt:</b> ${esc(d.notiz)}</div>`:''}
+    ${kumulierungHinweis()}
+    <div class="isfp">
+      <div class="isfp-txt">
+        <div class="isfp-h">Passt dieses Programm zu Ihrem Vorhaben?</div>
+        <p>Diese Seite gibt einen Überblick ohne objektbezogene Berechnung. Gern prüfen wir, ob und in welcher Höhe das Programm für Ihr Objekt in Frage kommt und wie es sich mit den Bundesprogrammen kombinieren lässt.</p>
+      </div>
+      <a class="isfp-btn" href="${infoMailto(p)}">Prüfung anfragen →</a>
+    </div>
+    <div class="note"><a href="${m.link}" target="_blank" rel="noopener">Programmseite &amp; Richtlinie ansehen →</a></div>
+    ${footLine(4+i,total)}
+  </div>`;
+}
+const APP_VERSION='2026-08-07';
+const APP_KANAL=(function(){ const f=(location.pathname.split('/').pop()||'').toLowerCase(); return /test/.test(f)?'TEST':'Live'; })();
+const BUNDESLAENDER = ['Baden-Württemberg','Bayern','Berlin','Brandenburg','Bremen','Hamburg','Hessen','Mecklenburg-Vorpommern','Niedersachsen','Nordrhein-Westfalen','Rheinland-Pfalz','Saarland','Sachsen','Sachsen-Anhalt','Schleswig-Holstein','Thüringen'];
+// PLZ-Bereiche → Bundesland (Näherung; Grenzgebiete sind manuell zu korrigieren)
+const PLZ_LAND = [
+  [1000,2999,'Sachsen'],[3000,3999,'Brandenburg'],[4000,4899,'Sachsen'],[4900,4999,'Brandenburg'],
+  [6000,6999,'Sachsen-Anhalt'],[7000,7999,'Thüringen'],[8000,9999,'Sachsen'],
+  [10000,14199,'Berlin'],[14400,16999,'Brandenburg'],[17000,17399,'Brandenburg'],[17400,17999,'Mecklenburg-Vorpommern'],
+  [18000,18999,'Mecklenburg-Vorpommern'],[19000,19299,'Mecklenburg-Vorpommern'],[19300,19399,'Brandenburg'],[19400,19999,'Mecklenburg-Vorpommern'],
+  [20000,21149,'Hamburg'],[21150,21899,'Niedersachsen'],[22000,22769,'Hamburg'],[22800,22999,'Schleswig-Holstein'],
+  [23000,23899,'Schleswig-Holstein'],[23900,23999,'Mecklenburg-Vorpommern'],[24000,25999,'Schleswig-Holstein'],
+  [26000,27799,'Niedersachsen'],[27800,27999,'Niedersachsen'],[28000,28779,'Bremen'],[28780,28999,'Niedersachsen'],
+  [29000,31999,'Niedersachsen'],[32000,33999,'Nordrhein-Westfalen'],[34000,36999,'Hessen'],
+  [37000,37999,'Niedersachsen'],[38000,38899,'Niedersachsen'],[39000,39999,'Sachsen-Anhalt'],
+  [40000,48999,'Nordrhein-Westfalen'],[49000,49999,'Niedersachsen'],[50000,53999,'Nordrhein-Westfalen'],
+  [54000,56999,'Rheinland-Pfalz'],[57000,59999,'Nordrhein-Westfalen'],[60000,65999,'Hessen'],
+  [66000,66999,'Saarland'],[67000,67999,'Rheinland-Pfalz'],[68000,68999,'Baden-Württemberg'],[69000,69999,'Baden-Württemberg'],
+  [70000,79999,'Baden-Württemberg'],[80000,87999,'Bayern'],[88000,89999,'Baden-Württemberg'],
+  [90000,97999,'Bayern'],[98000,99999,'Thüringen']
+];
+// Einzel-PLZ, die von der Bereichslogik abweichen (Enklaven / Grenzlagen)
+const PLZ_AUSNAHMEN = {
+  '12529':'Brandenburg', // Schönefeld
+  '14532':'Brandenburg', // Kleinmachnow / Stahnsdorf
+  '14513':'Brandenburg', // Teltow
+  '14612':'Brandenburg', // Falkensee
+  '14624':'Brandenburg', // Dallgow-Döberitz
+  '16341':'Brandenburg', // Panketal
+  '15366':'Brandenburg', // Hoppegarten
+  '15827':'Brandenburg'  // Blankenfelde-Mahlow
+};
+// PLZ-Bereiche, die Landesgrenzen überschreiten → Nutzer zur Prüfung auffordern
+const PLZ_UNSICHER = [[4900,4999],[6000,6999],[17000,17999],[19000,19999],[21000,22999],[23000,23999],[27000,28999],[32000,32999],[34000,34999],[37000,38999],[49000,49999],[53000,53999],[57000,57999],[65000,66999],[68000,69999],[87000,89999],[97000,97999]];
+function plzNorm(p){ const s=String(p||'').replace(/\D/g,'').slice(0,5); return s?s.padStart(5,'0'):''; }
+function landAusPlz(plz){
+  const s=plzNorm(plz); if(!s) return '';
+  if(PLZ_AUSNAHMEN[s]) return PLZ_AUSNAHMEN[s];
+  const n=parseInt(s,10);
+  const hit=PLZ_LAND.find(r=>n>=r[0]&&n<=r[1]);
+  return hit?hit[2]:'';
+}
+function plzUnsicher(plz){
+  const s=plzNorm(plz); if(!s || PLZ_AUSNAHMEN[s]) return false;
+  const n=parseInt(s,10);
+  return PLZ_UNSICHER.some(r=>n>=r[0]&&n<=r[1]);
+}
+function bundesland(){ return S.obj.bundesland || landAusPlz(S.obj.plz); }
+function syncPlzOrt(){ S.obj.plzort=[S.obj.plz,S.obj.ort].filter(Boolean).join(' ').trim(); }
+function renderBlUI(){
+  const sel=document.getElementById('blSel'); if(!sel) return;
+  const auto=landAusPlz(S.obj.plz);
+  sel.innerHTML=`<option value="">${auto?'Automatisch aus PLZ · '+auto:'Automatisch aus PLZ'}</option>`+
+    BUNDESLAENDER.map(b=>`<option value="${b}" ${S.obj.bundesland===b?'selected':''}>${b}</option>`).join('');
+  const tag=document.getElementById('blAuto');
+  if(tag) tag.textContent = S.obj.bundesland ? 'manuell gesetzt' : (auto?'automatisch':'');
+  const warn=document.getElementById('blWarn');
+  if(warn){
+    const zeig = !S.obj.bundesland && plzUnsicher(S.obj.plz);
+    warn.style.display = zeig?'':'none';
+    if(zeig) warn.innerHTML = `⚠ Diese PLZ liegt in einem Gebiet, in dem sich Landesgrenzen und PLZ-Bereiche überschneiden. Bitte das Bundesland prüfen und bei Bedarf manuell setzen.`;
+  }
+}
+window.setBundesland=(v)=>{ S.obj.bundesland=v; save(); renderBlUI(); renderProgToggles(); renderProgBlocks(); renderDoc(); };
+function istBerlin(){ return bundesland()==='Berlin'; }
+function PK(){
+  const base = isNWG() ? PROGRAMME_KATALOG_NWG : PROGRAMME_KATALOG_WG;
+  if(!istBerlin()) return base;
+  // Kommunale Programme: erst Programme mit Berechnung, dann reine Erklärseiten
+  const kom = PROGRAMME_KOMMUNAL_BERLIN.filter(p=>!p.info).concat(PROGRAMME_KOMMUNAL_BERLIN.filter(p=>p.info));
+  return base.concat(kom);
+}
+
+/* ---------- KfW-Programmvarianten generieren ---------- */
+const _eur = n => Math.round(n).toLocaleString('de-DE')+' €';
+const _num = x => { const s=String(x==null?'':x).replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'); const n=parseFloat(s); return isNaN(n)?0:n; };
+const _WE = 22;
+const KFW_TIER = {
+  85:{ klasse:'C', kwh:'100 kWh/m²a', invest:420000, co2Red:'−45 %', co2Rest:'26 t Rest', pe:'100', ee:'118', co2:'18',
+       lead:'Einstiegsniveau der KfW-Effizienzhausförderung. Solider Klassensprung bei moderater Investition.',
+       ms:ee=>[ {m:'Dachdämmung',b:'req',note:'U ≤ 0,14 W/m²K',invest:'40.000'},{m:'Obergeschossdecke (OGD)',b:'req',note:'U ≤ 0,14 W/m²K',invest:'22.000'},{m:'Fenster-/Türaustausch',b:'req',note:'3-fach, Ug ≤ 0,60 W/m²K',invest:'148.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 3,5',invest:'210.000'} ] },
+  70:{ klasse:'B', kwh:'68 kWh/m²a', invest:508000, co2Red:'−72 %', co2Rest:'13 t Rest', pe:'68', ee:'88', co2:'9',
+       lead:'Vollständige Hüllsanierung auf Effizienzhaus-70-Niveau mit erneuerbarer Wärme. Der ausgewogene Weg mit klarem Klassensprung.',
+       ms:ee=>[ {m:'Fassadendämmung (WDVS)',b:'req',note:'U ≤ 0,20 W/m²K',invest:'156.000'},{m:'Dachdämmung',b:'req',note:'U ≤ 0,14 W/m²K',invest:'40.000'},{m:'Obergeschossdecke (OGD)',b:'req',note:'U ≤ 0,14 W/m²K',invest:'22.000'},{m:'Fenster-/Türaustausch',b:'req',note:'3-fach, Ug ≤ 0,60 W/m²K',invest:'148.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 3,5',invest:'110.000'},{m:'Kellerdeckendämmung',b:'req',note:'Unterseite 10 cm',invest:'32.000'} ] },
+  55:{ klasse:'A', kwh:'48 kWh/m²a', invest:690000, co2Red:'−84 %', co2Rest:'7 t Rest', pe:'48', ee:'64', co2:'5',
+       lead:'Höchstes Effizienzniveau mit maximaler Förderung. Vollsanierung inklusive Lüftung und Photovoltaik für die beste CO₂-Bilanz.',
+       ms:ee=>[ {m:'Vollständige Hüllsanierung',b:'req',note:'Fassade, Dach, Fenster, Keller',invest:'398.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 4,0',invest:'130.000'},{m:'Lüftung mit Wärmerückgewinnung',b:'req',note:'zentral, WRG ≥ 80 %',invest:'92.000'},{m:'Photovoltaik-Anlage',b:'req',note:'Dachbelegung ca. 45 kWp',invest:'70.000',noFoe:true} ] },
+  40:{ klasse:'A+', kwh:'32 kWh/m²a', invest:760000, co2Red:'−91 %', co2Rest:'4 t Rest', pe:'32', ee:'44', co2:'3',
+       lead:'Höchster Neubau-nahe Effizienzstandard in der Sanierung. Vollsanierung mit sehr hoher Dämmqualität, Lüftung und Photovoltaik.',
+       ms:ee=>[ {m:'Vollständige Hüllsanierung',b:'req',note:'Passivhauskomponenten, U-Werte sehr niedrig',invest:'460.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 4,0',invest:'140.000'},{m:'Lüftung mit Wärmerückgewinnung',b:'req',note:'zentral, WRG ≥ 85 %',invest:'96.000'},{m:'Photovoltaik-Anlage',b:'req',note:'Dachbelegung ca. 55 kWp',invest:'64.000',noFoe:true} ] },
+  denkmal:{ klasse:'Denkmal', kwh:'—', invest:520000, co2Red:'−60 %', co2Rest:'18 t Rest', pe:'—', ee:'—', co2:'12',
+       lead:'Sanierung denkmalgeschützter oder erhaltenswerter Bausubstanz mit erneuerbarer Wärme, unter Wahrung der historischen Fassade und Bauweise.',
+       ms:ee=>[ {m:'Innendämmung / substanzschonende Hüllsanierung',b:'req',note:'denkmalgerecht, keine Fassadenänderung',invest:'210.000'},{m:'Fenster-/Türaustausch',b:'req',note:'denkmalgerecht, ggf. Kastenfenster',invest:'98.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 3,5',invest:'130.000'},{m:'Lüftung mit Wärmerückgewinnung',b:'req',note:'dezentral, denkmalgerecht',invest:'82.000'} ] }
+};
+const KFW_MAXWE = 150000;
+const NWG_EG_M2_CAP = 2000;
+const NWG_EG_ABS_CAP = 10000000;
+function mkKfw(tier, satzPct, ee, lead){
+  const t = KFW_TIER[tier];
+  const foerder = t.invest*satzPct/100;
+  const kask = [ {l:'Investition',v:_eur(t.invest)}, {l:`Tilgungszuschuss ${satzPct} %`,v:'− '+_eur(foerder),pos:true} ];
+  return { klasse:t.klasse, klasseKwh:t.kwh, invest:_eur(t.invest), investWE:_eur(Math.round(t.invest/_WE/100)*100)+'/WE',
+    foerderung:_eur(foerder), foerderNote:`Tilgungszuschuss ${satzPct} %`, netto:_eur(t.invest-foerder), co2Red:t.co2Red, co2Rest:t.co2Rest,
+    pe:t.pe, ee:t.ee, co2:t.co2, satz:String(satzPct),
+    lead: lead||t.lead, massnahmen:t.ms(ee), kask };
+}
+
+/* ---------- Default-State ---------- */
+const DEFAULT = {
+  obj:{ adresse:'Leopoldstraße 142', plz:'80804', ort:'München-Schwabing', bundesland:'', plzort:'80804 München-Schwabing', typ:'wg', we:'22', qm:'1.640', baujahr:'1968', begCapM2:'500', kfwCapM2:'2000', az:'DGX-2026-FK-0142', datum:'06. Juli 2026', bild:'' },
+  ist:{ peIst:'198', peZiel:'68', eeIst:'176', eeZiel:'52', co2Ist:'47', co2Ziel:'13', co2m2Ist:'28,7', co2m2Ziel:'7,9',
+        eekIst:'E', eekZiel:'B', farbeIst:'#F6A623', farbeZiel:'#5FAD31',
+        huelle:[ {n:'Fassade',s:'r',note:'ungedämmt'},{n:'Dach / OG-Decke',s:'r',note:'ungedämmt'},{n:'Fenster',s:'y',note:'2-fach, 1995'},{n:'Kellerdecke',s:'y',note:'teilgedämmt'} ],
+        technik:[ {n:'Wärmeerzeuger',s:'r',note:'Gaskessel, 2004'},{n:'Warmwasser',s:'y',note:'zentral, Gas'},{n:'Heizungsverteilung',s:'r',note:'ungedämmt'},{n:'Lüftung',s:'g',note:'Fensterlüftung'} ]
+  },
+  progAktiv:['beg','kfw70ee','kfw55ee'],
+  progRec:'kfw70ee',
+  progAktivNWG:['beg','kfweg70ee','kfweg55ee'],
+  progRecNWG:'kfweg70ee',
+  prog:{
+    beg:{ klasse:'C', klasseKwh:'110 kWh/m²a', invest:'', investWE:'', foerderung:'', foerderNote:'', netto:'', co2Red:'−38 %', co2Rest:'29 t Rest', pe:'110', ee:'132', co2:'21',
+        lead:'Einzelne Maßnahmen ohne Gesamtstandard. Schnell und flexibel umsetzbar, mit direktem Zuschuss je Maßnahme, aber begrenzter Effizienzwirkung.',
+        massnahmen:[ {m:'Fassadendämmung (WDVS)',b:'req',note:'U ≤ 0,20 W/m²K',invest:'156.000',satz:'20'},{m:'Dachdämmung',b:'req',note:'U ≤ 0,14 W/m²K',invest:'40.000',satz:'20'},{m:'Obergeschossdecke (OGD)',b:'req',note:'U ≤ 0,14 W/m²K',invest:'22.000',satz:'20'},{m:'Fensteraustausch',b:'req',note:'3-fach, Ug ≤ 0,60 W/m²K',invest:'88.000',satz:'20'},{m:'Heizungstausch Wärmepumpe',b:'req',note:'Luft-Wasser, JAZ ≥ 3,5',invest:'148.000',satz:'30',heiz:true} ],
+        kask:[] },
+    gzw:{ we:'', investWe:'100.000', invest:'', foerderung:'', netto:'', kask:[],
+        lead:'Direktzuschuss für den Umbau von Gewerbe- oder anderen Nichtwohnflächen zu neuem Wohnraum (KfW 266). Voraussetzung ist mindestens das energetische Niveau Effizienzhaus 85 EE (bzw. EH Denkmal EE für erhaltenswerte Bausubstanz).' },
+    ibbjunges:{ flaeche:'', plaetze:'', satzDarlehen:'3.600', satzZuschuss:'2.200', nRolli:'', nEh:'', satzEh:'5.000', invest:'', foerderung:'', netto:'', kask:[],
+        lead:'Förderung des Landes Berlin für die Schaffung von Wohnheimplätzen für Studierende und Auszubildende — als zinsloses Baudarlehen über 30 Jahre, kombiniert mit Baukostenzuschuss und einmaligen Zusatzzuschüssen. Gefördert werden Neubau sowie Nutzungsänderung oder Erweiterung bestehender Gebäude.' },
+    ibbco2:{ wfl:'', co2Ist:'', co2Ziel:'', bonus:true, invest:'', foerderung:'', netto:'', kask:[],
+        lead:'Förderprogramm des Landes Berlin, das energetische Sanierungen von Mietwohngebäuden nach der tatsächlich erreichten CO₂-Einsparung fördert — als zinsloses Darlehen, ergänzt um einen Zuschuss, wenn Miet- und Belegungsbindungen eingegangen werden. Die Maßnahmenwahl ist frei, entscheidend ist das erreichte Ergebnis.' },
+    ibbsolarl:{ groesse:'klein', invest:'', foerderung:'', netto:'', kask:[],
+        lead:'Zuschussprogramm des Landes Berlin für Photovoltaik auf Mehrfamilienhäusern, Gewerbe- und Nichtwohngebäuden. Gefördert werden Planungsleistungen, Messinfrastruktur sowie PV-Anlagen mit Speicher und baulich integrierte Sonderformen — jeweils als Anteilsfinanzierung mit modulbezogener Höchstgrenze.',
+        module:[
+          {k:'gutachten',  n:'Dachgutachten (Statik, Eignung, Denkmalschutz)', grp:'a', cap:15000, kosten:''},
+          {k:'studie',     n:'Machbarkeitsstudie PV-Projekt',                  grp:'a', cap:15000, kosten:''},
+          {k:'messkonz',   n:'Zähler- und Messkonzept',                        grp:'a', cap:15000, kosten:''},
+          {k:'messplatz',  n:'Messplätze (Zählerschränke, Räume)',             grp:'b', cap:15000, kosten:''},
+          {k:'netzanschl', n:'Zusammenlegen von Netzanschlüssen',              grp:'b', cap:10000, kosten:''},
+          {k:'pvspeicher', n:'PV-Anlage mit Stromspeicher',                    grp:'b', cap:30000, kosten:''},
+          {k:'denkmalpv',  n:'Denkmalgerechte PV-Anlage',                      grp:'b', cap:30000, kosten:''},
+          {k:'fassadepv',  n:'Fassaden-Photovoltaik (integriert)',             grp:'b', cap:30000, kosten:''},
+          {k:'gruendach',  n:'Gründach-Photovoltaik',                          grp:'b', cap:30000, kosten:''}
+        ] },
+    kfw85ee:    mkKfw(85,0, true),
+    kfw70ee:    mkKfw(70,0, true),
+    kfw70eewpb: mkKfw(70,15,true, KFW_TIER[70].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).'),
+    kfw55ee:    mkKfw(55,5, true),
+    kfw55eewpb: mkKfw(55,15,true, KFW_TIER[55].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).'),
+    kfw40ee:    mkKfw(40,10,true),
+    kfw40eewpb: mkKfw(40,20,true, KFW_TIER[40].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).'),
+    kfwdenkmalee: mkKfw('denkmal',5,true),
+    kfw85eegzw: Object.assign(mkKfw(85,0,true,'Energetisches Basisniveau für die Zusatzförderung „Gewerbe zu Wohnen" (KfW 266) — mindestens EH 85 EE muss beim Umbau von Gewerbe- zu Wohnflächen erreicht werden.'),{we:''}),
+    kfwegdenkmalee: mkKfw('denkmal',5,true),
+    kfweg70ee:    mkKfw(70,0, true),
+    kfweg70eewpb: mkKfw(70,10,true, KFW_TIER[70].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).'),
+    kfweg55ee:    mkKfw(55,5, true),
+    kfweg55eewpb: mkKfw(55,15,true, KFW_TIER[55].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).'),
+    kfweg40ee:    mkKfw(40,10,true),
+    kfweg40eewpb: mkKfw(40,20,true, KFW_TIER[40].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).')
+  },
+  fazit:{
+    lead:'Der vorliegende Fördermittelkompass wurde auf Basis der uns vorliegenden Objekt-, Verbrauchs- und Zustandsdaten nach bestem Wissen und Gewissen erstellt. Alle Förderbeträge, Effizienzkennwerte und Kostenangaben sind indikativ und beziehen sich auf den aktuellen Stand der Förderprogramme; verbindliche Konditionen ergeben sich erst im Rahmen der individuellen Antragstellung über den Finanzierungspartner bzw. die zuständige Förderstelle.',
+    text:'Auf Grundlage der Analyse empfehlen wir die Umsetzung der als Empfehlung markierten Variante. Wir begleiten Sie gern bei der Detailberechnung, der Erstellung eines individuellen Sanierungsfahrplans sowie der vollständigen Antragstellung.',
+    disclaimer:'Diese Unterlage dient der Orientierung und stellt keine Rechts-, Steuer- oder Finanzierungsberatung dar. Angaben ohne Gewähr · Stand 2026.',
+    ort:'München', unterzeichner:'DGX GmbH', funktion:'Energieberatung & Fördermittelmanagement', sig:'', stamp:''
+  }
+};
+
+/* ---------- Projekt-Verwaltung (mehrere Fördermittelkompasse in einer Datei) ---------- */
+const PROJ_INDEX_KEY = 'dgx_fk_projects';
+function loadProjIndex(){
+  try{ const idx = JSON.parse(localStorage.getItem(PROJ_INDEX_KEY)); if(idx && idx.list && idx.list.length) return idx; }catch(e){}
+  // Migration: altes Einzelprojekt (dgx_fk_state) übernehmen, sonst leeres Erstprojekt anlegen
+  const id = 'p'+Date.now();
+  const idx = { list:[{id, name:'Neues Projekt', updated:Date.now()}], current:id };
+  const old = localStorage.getItem('dgx_fk_state');
+  if(old) localStorage.setItem('dgx_fk_data_'+id, old);
+  localStorage.setItem(PROJ_INDEX_KEY, JSON.stringify(idx));
+  return idx;
+}
+let PROJ = loadProjIndex();
+function saveProjIndex(){ try{ localStorage.setItem(PROJ_INDEX_KEY, JSON.stringify(PROJ)); }catch(e){} }
+function quotaAlert(){ alert('Speicherplatz voll — bitte ein älteres Projekt löschen oder das Deckblattbild verkleinern, dann erneut versuchen.'); }
+function trySetProject(id, dataStr){ try{ localStorage.setItem('dgx_fk_data_'+id, dataStr); return true; }catch(e){ quotaAlert(); return false; } }
+function currentProjectData(){
+  try{ const raw = localStorage.getItem('dgx_fk_data_'+PROJ.current); if(raw) return JSON.parse(raw); }catch(e){}
+  return null;
+}
+function refreshProjSelect(){
+  const sel = document.getElementById('projSelect'); if(!sel) return;
+  PROJ.list.sort((a,b)=>b.updated-a.updated);
+  sel.innerHTML = PROJ.list.map(p=>`<option value="${p.id}" ${p.id===PROJ.current?'selected':''}>${esc(p.name)}</option>`).join('');
+}
+window.switchProject=(id)=>{ saveProjIndex(); PROJ.current=id; saveProjIndex(); location.reload(); };
+window.newProject=()=>{
+  const name = prompt('Name des neuen Projekts (z. B. Objektadresse):','Neues Projekt'); if(!name) return;
+  const id = 'p'+Date.now();
+  if(!trySetProject(id, JSON.stringify(DEFAULT))) return;
+  PROJ.list.push({id, name, updated:Date.now(), autoName:false});
+  PROJ.current = id;
+  saveProjIndex();
+  location.reload();
+};
+window.duplicateProject=()=>{
+  const cur = PROJ.list.find(p=>p.id===PROJ.current);
+  const name = prompt('Name der Kopie:', (cur?cur.name:'Projekt')+' (Kopie)'); if(!name) return;
+  const id = 'p'+Date.now();
+  if(!trySetProject(id, JSON.stringify(S))) return;
+  PROJ.list.push({id, name, updated:Date.now(), autoName:false});
+  PROJ.current = id;
+  saveProjIndex();
+  location.reload();
+};
+window.renameProject=()=>{
+  const cur = PROJ.list.find(p=>p.id===PROJ.current); if(!cur) return;
+  const name = prompt('Neuer Projektname:', cur.name); if(!name) return;
+  cur.name = name; cur.autoName = false; saveProjIndex(); refreshProjSelect();
+};
+window.deleteProject=()=>{
+  if(PROJ.list.length<=1){ alert('Das letzte verbleibende Projekt kann nicht gelöscht werden.'); return; }
+  const cur = PROJ.list.find(p=>p.id===PROJ.current);
+  if(!confirm(`Projekt "${cur?cur.name:''}" wirklich löschen?`)) return;
+  localStorage.removeItem('dgx_fk_data_'+PROJ.current);
+  PROJ.list = PROJ.list.filter(p=>p.id!==PROJ.current);
+  PROJ.current = PROJ.list[0].id;
+  saveProjIndex();
+  location.reload();
+};
+window.exportProject=()=>{
+  const cur = PROJ.list.find(p=>p.id===PROJ.current);
+  const blob = new Blob([JSON.stringify(S,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=(cur?cur.name:'projekt').replace(/[^a-z0-9äöüß _-]/gi,'')+'.json'; a.click();
+  URL.revokeObjectURL(url);
+};
+window.importProjectFile=(file)=>{
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = e=>{
+    let data; try{ data = JSON.parse(e.target.result); }catch(err){ alert('Ungültige Datei.'); return; }
+    const name = prompt('Name für das importierte Projekt:', file.name.replace(/\.json$/i,'')) || 'Importiertes Projekt';
+    const id = 'p'+Date.now();
+    if(!trySetProject(id, JSON.stringify(data))) return;
+    PROJ.list.push({id, name, updated:Date.now(), autoName:false});
+    PROJ.current = id;
+    saveProjIndex();
+    location.reload();
+  };
+  r.readAsText(file);
+};
+
+/* ---------- State laden ---------- */
+let S;
+try { S = currentProjectData() || JSON.parse(JSON.stringify(DEFAULT)); }
+catch(e){ S = JSON.parse(JSON.stringify(DEFAULT)); }
+// Rettung: bereits gespeicherte, zu große Bilder (alte Uploads vor der Komprimierung) verkleinern, damit der Speicher nicht voll bleibt
+function shrinkOversizedImage(dataUrl, cb){
+  if(!dataUrl || dataUrl.length < 400000){ cb(dataUrl); return; }
+  const img = new Image();
+  img.onload = ()=>{
+    const maxDim=1600; let w=img.width,h=img.height;
+    if(w>maxDim||h>maxDim){ const sc=maxDim/Math.max(w,h); w=Math.round(w*sc); h=Math.round(h*sc); }
+    const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    cb(canvas.toDataURL('image/jpeg',0.78));
+  };
+  img.onerror = ()=>cb(dataUrl);
+  img.src = dataUrl;
+}
+if(S.obj.bild && S.obj.bild.length>400000){
+  shrinkOversizedImage(S.obj.bild, smaller=>{ S.obj.bild=smaller; save(); if(document.getElementById('progBlocks')) renderDoc(); });
+}
+// Merge fehlende prog-Defaults (falls neue Programme dazukommen)
+for(const p of [...PROGRAMME_KATALOG_WG, ...PROGRAMME_KATALOG_NWG, ...PROGRAMME_KOMMUNAL_BERLIN]){ if(!S.prog[p.id]) S.prog[p.id] = JSON.parse(JSON.stringify(DEFAULT.prog[p.id]||{klasse:'',massnahmen:[],kask:[]})); }
+if(S.progAktivNWG===undefined) S.progAktivNWG = DEFAULT.progAktivNWG.slice();
+if(S.progRecNWG===undefined) S.progRecNWG = DEFAULT.progRecNWG;
+if(!S.fazit) S.fazit = JSON.parse(JSON.stringify(DEFAULT.fazit));
+// Gebäudetyp & NWG-Parameter nachrüsten
+if(S.obj.typ===undefined) S.obj.typ='wg';
+if(S.obj.begCapM2===undefined) S.obj.begCapM2=DEFAULT.obj.begCapM2;
+if(S.obj.kfwCapM2===undefined) S.obj.kfwCapM2=DEFAULT.obj.kfwCapM2;
+// Endenergie-Felder nachrüsten (ältere gespeicherte Stände)
+if(S.ist.eeIst===undefined){ S.ist.eeIst = DEFAULT.ist.eeIst; S.ist.eeZiel = DEFAULT.ist.eeZiel; }
+// Programmkatalog-Umstellung: KfW-Programmdaten einmalig auf neue Defaults zurücksetzen
+// v3: einmalige Umstellung des Programmkatalogs (nur für Stände < 3)
+if((S._v||0) < 3){
+  S.prog = JSON.parse(JSON.stringify(DEFAULT.prog));
+  const validIds = PROGRAMME_KATALOG_WG.map(p=>p.id);
+  S.progAktiv = (S.progAktiv||[]).filter(id=>validIds.includes(id));
+  if(!S.progAktiv.length) S.progAktiv = DEFAULT.progAktiv.slice();
+  if(!validIds.includes(S.progRec)) S.progRec = S.progAktiv[0]||'';
+  S._v = 3;
+}
+// v4: Energiekennwerte pro m² additiv nachrüsten (nicht überschreibend)
+if((S._v||0) < 4){
+  const qm = _num(S.obj.qm)||1;
+  if(S.ist.co2m2Ist===undefined)  S.ist.co2m2Ist  = S.ist.co2Ist  ? String(Math.round(_num(S.ist.co2Ist)*1000/qm*10)/10).replace('.',',')  : DEFAULT.ist.co2m2Ist;
+  if(S.ist.co2m2Ziel===undefined) S.ist.co2m2Ziel = S.ist.co2Ziel ? String(Math.round(_num(S.ist.co2Ziel)*1000/qm*10)/10).replace('.',',') : DEFAULT.ist.co2m2Ziel;
+  for(const id in S.prog){
+    const d=S.prog[id], dd=DEFAULT.prog[id];
+    if(d.pe===undefined)  d.pe  = dd ? dd.pe  : String(parseFloat(d.klasseKwh)||'');
+    if(d.ee===undefined)  d.ee  = dd ? dd.ee  : '';
+    if(d.co2===undefined) d.co2 = dd ? dd.co2 : '';
+  }
+  S._v = 4;
+}
+// v5: KfW-Tilgungszuschuss-Satz nachrüsten (Basis nach Stufe + EE 5 % + WPB 10 %)
+if((S._v||0) < 5){
+  for(const id in S.prog){
+    if(id==='beg') continue;
+    const d=S.prog[id];
+    if(d.satz===undefined || d.satz===''){
+      const base = /55/.test(id)?15 : /70/.test(id)?10 : /85/.test(id)?5 : 10;
+      d.satz = String(base + (/ee/.test(id)?5:0) + (/wpb/.test(id)?10:0));
+    }
+  }
+  S._v = 5;
+}
+// v6: NWG-Farbbewertung nachrüsten
+if((S._v||0) < 6){
+  if(S.ist.farbeIst===undefined)  S.ist.farbeIst  = DEFAULT.ist.farbeIst;
+  if(S.ist.farbeZiel===undefined) S.ist.farbeZiel = DEFAULT.ist.farbeZiel;
+  for(const id in S.prog){ if(S.prog[id].farbe===undefined) S.prog[id].farbe = '#5FAD31'; }
+  S._v = 6;
+}
+// v7: Wording — Tilgungszuschuss statt Tilgungserlass, Disclaimer ohne "Förderlogik"
+if((S._v||0) < 8){
+  if(S.fazit && typeof S.fazit.disclaimer==='string') S.fazit.disclaimer = S.fazit.disclaimer.replace('Stand der Förderlogik 2026','Stand 2026');
+  for(const id in S.prog){ const d=S.prog[id]; if(d && typeof d.foerderNote==='string') d.foerderNote = d.foerderNote.replace(/Tilgungserlass/g,'Tilgungszuschuss'); if(d && typeof d.lead==='string') d.lead = d.lead.replace(/Tilgungserlass/g,'Tilgungszuschuss'); if(Array.isArray(d.kask)) d.kask.forEach(k=>{ if(typeof k.l==='string') k.l=k.l.replace(/Tilgungserlass/g,'Tilgungszuschuss'); }); }
+  S._v = 8;
+}
+// v9: KfW-Maßnahmen einzeln bepreisen — Default-Preise übernehmen, wenn noch keine gesetzt
+if((S._v||0) < 9){
+  for(const id in S.prog){
+    if(id==='beg') continue;
+    const d=S.prog[id], def=DEFAULT.prog[id];
+    const anyPriced=(d.massnahmen||[]).some(m=>m.invest!==undefined && m.invest!=='');
+    if(!anyPriced && def && def.massnahmen) d.massnahmen = JSON.parse(JSON.stringify(def.massnahmen));
+  }
+  S._v = 9;
+}
+// v10: BEG-Heizungsmaßnahmen markieren (Förderobergrenze), Heiz-Flag nachrüsten
+if((S._v||0) < 10){
+  const rx=/(heizung|wärmepumpe|fernwärme|wärmenetz|biomasse|pellet|solarthermie|brennstoffzelle)/i;
+  const beg=S.prog.beg; if(beg && Array.isArray(beg.massnahmen)) beg.massnahmen.forEach(m=>{ if(m.heiz===undefined) m.heiz = rx.test(m.m||''); });
+  S._v = 10;
+}
+// v11: Maßnahmen-Katalog — Fenster/Tür zusammenführen, Dach & OGD trennen
+if((S._v||0) < 11){
+  for(const id in S.prog){
+    (S.prog[id].massnahmen||[]).forEach(m=>{
+      if(m.m==='Fensteraustausch'||m.m==='Türaustausch') m.m='Fenster-/Türaustausch';
+      if(m.m==='Dachdämmung / OG-Decke') m.m='Dachdämmung';
+    });
+  }
+  S._v = 11;
+}
+// v12: PV/Photovoltaik bei KfW standardmäßig vom Tilgungszuschuss ausnehmen
+if((S._v||0) < 12){
+  for(const id in S.prog){
+    if(id==='beg') continue;
+    (S.prog[id].massnahmen||[]).forEach(m=>{ if(m.noFoe===undefined && /photovoltaik|pv-anlage|\bpv\b/i.test(m.m||'')) m.noFoe=true; });
+  }
+  S._v = 12;
+}
+// v13: BEG-Reform 21.07.2026 — Heizungsoptimierung umbenannt, WPB-Manual-Feld
+if((S._v||0) < 13){
+  (S.prog.beg?.massnahmen||[]).forEach(m=>{ if(m.m==='Heizungsoptimierung / hydraul. Abgleich') m.m='Heizungsoptimierung (Effizienzverbesserung)'; });
+  if(S.ist.wpbManual===undefined) S.ist.wpbManual=null;
+  S._v = 13;
+}
+// v14: KfW-Programme neu — 85/70/55 non-EE und 55-WPB entfernt, 40 EE + Denkmal EE hinzugefügt, alle Sätze fix, 150.000€/WE
+if((S._v||0) < 14){
+  S.prog = JSON.parse(JSON.stringify(DEFAULT.prog));
+  const validIds = PROGRAMME_KATALOG_WG.map(p=>p.id);
+  S.progAktiv = (S.progAktiv||[]).filter(id=>validIds.includes(id));
+  if(!S.progAktiv.length) S.progAktiv = DEFAULT.progAktiv.slice();
+  if(!validIds.includes(S.progRec)) S.progRec = S.progAktiv[0]||'';
+  S._v = 14;
+}
+// v15: NWG erhält eigenen Programmkatalog (KfW EG …) statt der WG-KfW-Programme
+if((S._v||0) < 15){
+  const validNwgIds = PROGRAMME_KATALOG_NWG.map(p=>p.id);
+  S.progAktivNWG = (S.progAktivNWG||[]).filter(id=>validNwgIds.includes(id));
+  if(!S.progAktivNWG.length) S.progAktivNWG = DEFAULT.progAktivNWG.slice();
+  if(!validNwgIds.includes(S.progRecNWG)) S.progRecNWG = DEFAULT.progRecNWG;
+  if(S.obj.typ==='nwg' && !S.progAktiv.every(id=>validNwgIds.includes(id))){ S.progAktiv = S.progAktivNWG.slice(); S.progRec = S.progRecNWG; }
+  S._v = 15;
+}
+// v16: KfW 266 "Gewerbe zu Wohnen" als NWG-Zusatzförderprogramm hinzugefügt
+if((S._v||0) < 16){
+  const validNwgIds16 = PROGRAMME_KATALOG_NWG.map(p=>p.id);
+  if(S.progAktivNWG) S.progAktivNWG = S.progAktivNWG.filter(id=>validNwgIds16.includes(id));
+  if(!S.prog.gzw) S.prog.gzw = JSON.parse(JSON.stringify(DEFAULT.prog.gzw));
+  S._v = 16;
+}
+// v17: KfW 85 EE als Basis-Programm für "Gewerbe zu Wohnen" bei NWG ergänzt
+if((S._v||0) < 17){
+  if(!S.prog.kfw85eegzw) S.prog.kfw85eegzw = JSON.parse(JSON.stringify(DEFAULT.prog.kfw85eegzw));
+  S._v = 17;
+}
+// v18: KfW 85 EE (Gewerbe zu Wohnen) rechnet BEG-EM-Förderung für seine Maßnahmen, WE synchron mit Gewerbe zu Wohnen
+if((S._v||0) < 18){
+  if(S.prog.kfw85eegzw && S.prog.kfw85eegzw.we===undefined) S.prog.kfw85eegzw.we = S.prog.gzw?.we || '';
+  S._v = 18;
+}
+// v19: Kommunale Programme (Berlin) — IBB SolarPLUS L
+if((S._v||0) < 19){
+  if(!S.prog.ibbsolarl) S.prog.ibbsolarl = JSON.parse(JSON.stringify(DEFAULT.prog.ibbsolarl));
+  if(!Array.isArray(S.prog.ibbsolarl.module) || !S.prog.ibbsolarl.module.length) S.prog.ibbsolarl.module = JSON.parse(JSON.stringify(DEFAULT.prog.ibbsolarl.module));
+  S._v = 19;
+}
+// v20: IBB CO2-Sparende Gebäude (Berlin, mit Berechnung)
+if((S._v||0) < 20){
+  if(!S.prog.ibbco2) S.prog.ibbco2 = JSON.parse(JSON.stringify(DEFAULT.prog.ibbco2));
+  if(!S.prog.ibbco2.co2Ist)  S.prog.ibbco2.co2Ist  = S.ist.co2m2Ist  || '';
+  if(!S.prog.ibbco2.co2Ziel) S.prog.ibbco2.co2Ziel = S.ist.co2m2Ziel || '';
+  S._v = 20;
+}
+// v21: IBB Junges Wohnen (Berlin, mit Berechnung)
+if((S._v||0) < 21){
+  if(!S.prog.ibbjunges) S.prog.ibbjunges = JSON.parse(JSON.stringify(DEFAULT.prog.ibbjunges));
+  S._v = 21;
+}
+// v22: PLZ und Ort getrennt, Bundesland-Feld (aus PLZ abgeleitet, überschreibbar)
+if((S._v||0) < 22){
+  if(S.obj.plz===undefined || S.obj.ort===undefined){
+    const m=String(S.obj.plzort||'').match(/^\s*(\d{4,5})\s*(.*)$/);
+    S.obj.plz = m?m[1]:'';
+    S.obj.ort = m?m[2].trim():String(S.obj.plzort||'').trim();
+  }
+  if(S.obj.bundesland===undefined) S.obj.bundesland='';
+  S._v = 22;
+}
+save();
+
+function save(){
+  try{
+    localStorage.setItem('dgx_fk_data_'+PROJ.current, JSON.stringify(S));
+    const cur = PROJ.list.find(p=>p.id===PROJ.current);
+    if(cur){
+      cur.updated = Date.now();
+      if(cur.autoName!==false) cur.name = S.obj.adresse || 'Neues Projekt';
+      saveProjIndex(); refreshProjSelect();
+    }
+  }catch(e){ quotaAlert(); }
+}
+function getPath(o,path){ return path.split('.').reduce((a,k)=>a&&a[k],o); }
+function setPath(o,path,val){ const ks=path.split('.'); const last=ks.pop(); let t=o; for(const k of ks) t=t[k]; t[last]=val; }
+
+/* ---------- Aktenzeichen & Datum automatisch ---------- */
+const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+function datumHeute(){ const d=new Date(); return String(d.getDate()).padStart(2,'0')+'. '+MONATE[d.getMonth()]+' '+d.getFullYear(); }
+function azNummer(){
+  // Hausnummer aus der Adresse ziehen (z. B. "Leopoldstraße 142" -> 0142)
+  const m = String(S.obj.adresse||'').match(/(\d+)\s*[a-z]?\s*$/i);
+  if(m) return String(m[1]).padStart(4,'0').slice(-4);
+  // Sonst fortlaufender Zähler
+  let c = parseInt(localStorage.getItem('dgx_fk_counter')||'0',10)+1;
+  localStorage.setItem('dgx_fk_counter', String(c));
+  return String(c).padStart(4,'0');
+}
+function buildAz(){ return `DGX-${new Date().getFullYear()}-FK-${azNummer()}`; }
+function syncField(path){ const el=document.querySelector(`[data-k="${path}"]`); if(el) el.value = getPath(S,path)||''; }
+function genAz(){ S.obj.az = buildAz(); save(); syncField('obj.az'); renderDoc(); }
+function genDatum(){ S.obj.datum = datumHeute(); save(); syncField('obj.datum'); renderDoc(); }
+function applyAuto(){
+  if(!S.obj.auto) return;
+  S.obj.az = buildAz();
+  S.obj.datum = datumHeute();
+  syncField('obj.az'); syncField('obj.datum');
+}
+function setAutoUI(){
+  const cb = document.getElementById('autoAz'); if(!cb) return;
+  cb.checked = !!S.obj.auto;
+  ['obj.az','obj.datum'].forEach(p=>{ const el=document.querySelector(`[data-k="${p}"]`); if(el){ el.readOnly = !!S.obj.auto; el.style.background = S.obj.auto?'var(--cloud)':'#fff'; el.style.color = S.obj.auto?'var(--steel)':'var(--ink)'; } });
+  document.querySelectorAll('.fld-gen').forEach(b=>{ b.style.opacity = S.obj.auto?'.4':'1'; b.style.pointerEvents = S.obj.auto?'none':'auto'; });
+}
+
+/* ---------- Helpers ---------- */
+const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+/* Energiekennwerte: Eingabe pro m²/a, Jahres-Gesamtwert = pro m² × Fläche */
+function _qm(){ return _num(S.obj.qm); }
+function isNWG(){ return S.obj.typ==='nwg'; }
+function isWPB(){ if(isNWG()) return !!S.ist.wpbManual; return S.ist.wpbManual!=null ? !!S.ist.wpbManual : S.ist.eekIst==='H'; }
+const GZW_LINK = 'https://www.kfw.de/266';
+function gzwMailto(){
+  const adr = [S.obj.adresse, S.obj.plzort].filter(Boolean).join(', ');
+  const subj = 'Anfrage: Förderung Gewerbe zu Wohnen (KfW 266)';
+  const body = `Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr} möchte ich mich zur Zusatzförderung „Gewerbe zu Wohnen“ (KfW 266) beraten lassen und Unterstützung bei Vorbereitung und Antragstellung erhalten.\n\nBitte setzen Sie sich mit mir in Verbindung.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+function recalcGzw(){
+  const d=S.prog.gzw; if(!d) return;
+  const we=_num(d.we)||0, investWe=_num(d.investWe)||0;
+  const investTotal=we*investWe;
+  const ffPerWe=Math.min(investWe,100000);
+  const foeRaw=ffPerWe*0.30*we;
+  const foe=Math.min(foeRaw,300000);
+  d.invest=_eur(investTotal);
+  d.foerderung=_eur(foe);
+  d.netto=_eur(Math.max(0,investTotal-foe));
+  d.kask=[ {l:'Umbaukosten gesamt (Annahme)', v:_eur(investTotal)} ];
+  if(ffPerWe<investWe && investWe>0) d.kask.push({l:'Förderfähig · max. 100.000 €/WE', v:_eur(ffPerWe*we)});
+  d.kask.push({l:'Zuschuss 30 %', v:'− '+_eur(foe), pos:true, sub:'max. 300.000 € gesamt'});
+}
+function gzwTotalsHtml(){
+  const d=S.prog.gzw;
+  return (d.kask||[]).map(k=>`<div class="beg-tot-row nowrap"><span>${esc(k.l)}${k.sub?`<br><small>${esc(k.sub)}</small>`:''}</span><b${k.pos?' class="pos"':''}>${esc(k.v)}</b></div>`).join('')+`<div class="beg-tot-row sum"><span>Eigenanteil (Umbau)</span><b>${esc(d.netto)}</b></div>`;
+}
+window.editGzw=(k,v)=>{
+  S.prog.gzw[k]=v; recalcGzw(); save();
+  if(k==='we' && S.prog.kfw85eegzw){ S.prog.kfw85eegzw.we=v; recalcKfw('kfw85eegzw'); }
+  renderDoc();
+  const t=document.getElementById('gzwtot'); if(t) t.innerHTML=gzwTotalsHtml();
+  const kt=document.getElementById('kfwtot-kfw85eegzw'); if(kt) kt.innerHTML=kfwTotalsHtml('kfw85eegzw');
+};
+const IBB_GROESSE = [
+  {k:'klein',  n:'Natürliche Person · kleines Unternehmen · WEG', a:65, b:50, hint:'< 50 Mitarbeitende, Umsatz/Bilanz ≤ 10 Mio. €'},
+  {k:'mittel', n:'Mittleres Unternehmen',                        a:55, b:40, hint:'50–249 Mitarbeitende, Umsatz ≤ 50 Mio. € oder Bilanz ≤ 43 Mio. €'},
+  {k:'gross',  n:'Großes Unternehmen',                           a:45, b:30, hint:'≥ 250 Mitarbeitende, Umsatz > 50 Mio. € und Bilanz > 43 Mio. €'}
+];
+function ibbGroesse(){ return IBB_GROESSE.find(g=>g.k===(S.prog.ibbsolarl||{}).groesse) || IBB_GROESSE[0]; }
+function ibbCalc(){
+  const d=S.prog.ibbsolarl||{}, g=ibbGroesse();
+  let invest=0, foe=0;
+  const rows=(d.module||[]).map(m=>{
+    const kosten=_num(m.kosten), satz=m.grp==='a'?g.a:g.b;
+    const roh=kosten*satz/100, betrag=Math.min(roh,m.cap), capped=roh>m.cap+0.5;
+    invest+=kosten; foe+=betrag;
+    return {...m, kosten, satz, betrag, capped};
+  });
+  return {rows, invest, foe, netto:Math.max(0,invest-foe), g};
+}
+function recalcIbb(){
+  const d=S.prog.ibbsolarl; if(!d) return;
+  const c=ibbCalc();
+  d.invest=_eur(c.invest); d.foerderung=_eur(c.foe); d.netto=_eur(c.netto);
+  d.foerderNote=`Anteilsfinanzierung · ${c.g.a} % / ${c.g.b} %`;
+  d.kask=[{l:'Investition gesamt', v:_eur(c.invest)}, {l:'Zuschuss Land Berlin', v:'− '+_eur(c.foe), pos:true}];
+}
+function ibbMailto(){
+  const adr=[S.obj.adresse,S.obj.plzort].filter(Boolean).join(', ');
+  const subj='Anfrage: IBB SolarPLUS L (Berlin)';
+  const body=`Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr} möchte ich mich zum Berliner Förderprogramm SolarPLUS L beraten lassen und Unterstützung bei Vorbereitung und Antragstellung erhalten.\n\nBitte setzen Sie sich mit mir in Verbindung.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+window.editIbb=(k,v)=>{ S.prog.ibbsolarl[k]=v; recalcIbb(); save(); renderDoc(); if(k!=='lead') renderProgBlocks(); };
+window.editIbbMod=(i,v)=>{
+  S.prog.ibbsolarl.module[i].kosten=v; recalcIbb(); save(); renderDoc();
+  const c=ibbCalc();
+  c.rows.forEach((r,idx)=>{ const el=document.getElementById('ibbf-'+idx); if(el) el.textContent=r.kosten?_eur(r.betrag):'—'; });
+  const t=document.getElementById('ibbtot'); if(t) t.innerHTML=ibbTotalsHtml();
+};
+function ibbTotalsHtml(){
+  const c=ibbCalc();
+  return `<div class="beg-tot-row"><span>Investition gesamt</span><b>${_eur(c.invest)}</b></div>
+    <div class="beg-tot-row nowrap"><span>Zuschuss Land Berlin</span><b class="pos">− ${_eur(c.foe)}</b></div>
+    <div class="beg-tot-row sum"><span>Eigenanteil</span><b>${_eur(c.netto)}</b></div>`;
+}
+function ibbBlockHtml(p){
+  const d=S.prog.ibbsolarl, c=ibbCalc();
+  return `<div class="prog-block">
+    <div class="pbh">${esc(p.name)} <span class="rec-lab">Berlin</span></div>
+    <div class="fld"><label>Antragstellende Partei <span class="rec-lab">bestimmt den Fördersatz</span></label>
+      <select onchange="editIbb('groesse',this.value)">${IBB_GROESSE.map(g=>`<option value="${g.k}" ${d.groesse===g.k?'selected':''}>${esc(g.n)} · ${g.a} % / ${g.b} %</option>`).join('')}</select>
+      <div class="hint">${esc(c.g.hint)} — Fördersatz ${c.g.a} % für Gutachten/Studien/Konzepte, ${c.g.b} % für Bau- und Anlagenmodule.</div>
+    </div>
+    <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editIbb('lead',this.value)">${esc(d.lead||'')}</textarea></div>
+    <div class="hint" style="margin:8px 0 4px">Kosten je Modul eintragen — leer lassen, wenn nicht geplant:</div>
+    ${c.rows.map((r,i)=>`<div class="beg-ms-grid" style="grid-template-columns:1fr 88px">
+      <label>${esc(r.n)} <span style="color:var(--mute)">· max. ${_eur(r.cap)}</span><input type="text" inputmode="decimal" value="${esc(r.kosten?String(d.module[i].kosten):(d.module[i].kosten||''))}" placeholder="0" oninput="editIbbMod(${i},this.value)"></label>
+      <label>Zuschuss ${r.satz} %<span class="beg-calc" id="ibbf-${i}">${r.kosten?_eur(r.betrag):'—'}</span></label>
+    </div>`).join('')}
+    <div class="beg-totals" id="ibbtot">${ibbTotalsHtml()}</div>
+  </div>`;
+}
+function ibbDetailHtml(p,d,i,total){
+  const c=ibbCalc(), aktiv=c.rows.filter(r=>r.kosten>0);
+  return `<div class="page">
+    <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)} · Kommunale Förderung</div><h2>IBB SolarPLUS L.</h2></div>
+      <div class="obj"><b>${esc(p.typ)}</b><br>IBB Business Team<br>${esc(S.obj.plzort)}</div></div>
+    <div class="rule"></div>
+    <div class="d-lead">${esc(d.lead||'')}</div>
+    <div class="sec-h">Kurzübersicht Bedingungen</div>
+    <div class="gzw-facts">
+      <div class="gzw-fact"><div class="fl">Förderart</div><div class="fv">Anteilsfinanzierung, Direktzuschuss</div></div>
+      <div class="gzw-fact"><div class="fl">Fördergeber</div><div class="fv">Land Berlin · IBB Business Team GmbH</div></div>
+      <div class="gzw-fact"><div class="fl">Antragstellende Partei</div><div class="fv">${esc(c.g.n)}</div></div>
+      <div class="gzw-fact"><div class="fl">Fördersätze</div><div class="fv">${c.g.a} % Gutachten/Studien/Konzepte · ${c.g.b} % Anlagen &amp; Bau</div></div>
+      <div class="gzw-fact"><div class="fl">Antragsberechtigt</div><div class="fv">Eigentümer von Mehrfamilienhäusern, Gewerbe- und Nichtwohngebäuden, WEG, Genossenschaften, Verwaltungen</div></div>
+      <div class="gzw-fact"><div class="fl">Nicht berechtigt</div><div class="fv">Ein-/Zweifamilien- und Reihenhäuser sowie einzelne Eigentumswohnungen (dort SolarPLUS S)</div></div>
+      <div class="gzw-fact"><div class="fl">Wichtigste Auflage</div><div class="fv">Projektstart erst nach Eingangsbestätigung des Antrags</div></div>
+      <div class="gzw-fact"><div class="fl">Bestandsbindung</div><div class="fv">Teilmodule nur für Gebäude/Messplätze vor dem 31.12.2014</div></div>
+    </div>
+    <div class="d-grid">
+      <div>
+        <div class="sec-h">Geplante Module</div>
+        ${aktiv.length?aktiv.map((r,idx)=>`<div class="ms"><div class="ms-n">M${idx+1}</div><div><div class="ms-name">${esc(r.n)}</div><div class="ms-note">Höchstbetrag ${_eur(r.cap)} · Fördersatz ${r.satz} %</div><div class="ms-note price">${_eur(r.kosten)} · ${r.satz} % = ${_eur(r.betrag)} Zuschuss${r.capped?` <span class="ms-cap">(auf Höchstbetrag gedeckelt)</span>`:''}</div></div></div>`).join(''):`<div class="hint">Noch keine Module bepreist — die Fördermodule und Höchstbeträge sind in der Übersicht rechts aufgeführt.</div>`}
+      </div>
+      <div>
+        <div class="sec-h">Förderrechnung</div>
+        <div class="kask">
+          ${(d.kask||[]).map(k=>`<div class="kask-row"><span class="kl">${esc(k.l)}</span><span class="kv${k.pos?' pos':''}">${esc(k.v)}</span></div>`).join('')}
+          <div class="kask-row sum"><span class="kl">Eigenanteil</span><span class="kv">${esc(d.netto)}</span></div>
+        </div>
+        <div class="doc-cap-note"><b>Hinweis:</b> Jedes Modul wird einzeln gedeckelt — der Zuschuss je Modul beträgt höchstens den angegebenen Höchstbetrag, unabhängig von der Gesamtinvestition. Die Module lassen sich innerhalb eines Vorhabens kombinieren.</div>
+      </div>
+    </div>
+    ${kumulierungHinweis()}
+    <div class="isfp">
+      <div class="isfp-txt">
+        <div class="isfp-h">Wir begleiten Sie gerne bei der Antragstellung</div>
+        <p>Von der Modulauswahl über die Angebots- und Nachweisunterlagen bis zur elektronischen Antragstellung bei der IBB unterstützen wir Sie — inklusive der Abstimmung mit den Bundesprogrammen, damit sich die Förderungen sinnvoll ergänzen. Fordern Sie ein unverbindliches Angebot an.</p>
+      </div>
+      <a class="isfp-btn" href="${ibbMailto()}">Angebot anfragen →</a>
+    </div>
+    <div class="note"><a href="https://www.ibb-business-team.de/foerderangebote/solarplus/solarplus-l/" target="_blank" rel="noopener">Förderrichtlinie &amp; Details ansehen →</a></div>
+    ${footLine(4+i,total)}
+  </div>`;
+}
+function gzwBlockHtml(p){
+  const d=S.prog.gzw;
+  return `<div class="prog-block">
+    <div class="pbh">${esc(p.name)} <span class="rec-lab">Zusatzförderung</span></div>
+    <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editGzw('lead',this.value)">${esc(d.lead||'')}</textarea></div>
+    <div class="row2">
+      <div class="fld"><label>Neu entstehende Wohneinheiten</label><input value="${esc(d.we)}" oninput="editGzw('we',this.value)"></div>
+      <div class="fld"><label>Umbaukosten € / WE <span class="rec-lab">Annahme</span></label><input value="${esc(d.investWe)}" oninput="editGzw('investWe',this.value)"></div>
+    </div>
+    <div class="beg-totals" id="gzwtot">${gzwTotalsHtml()}</div>
+  </div>`;
+}
+function gzwDetailHtml(p,d,i,total){
+  const we=_num(d.we)||0, investWe=_num(d.investWe)||0;
+  return `<div class="page">
+    <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)} · Zusatzförderung</div><h2>${esc(p.name)}.</h2></div>
+      <div class="obj"><b>${esc(p.typ)}</b><br>KfW 266</div></div>
+    <div class="rule"></div>
+    <div class="d-lead">${esc(d.lead||'')}</div>
+    <div class="sec-h">Kurzübersicht Bedingungen</div>
+    <div class="gzw-facts">
+      <div class="gzw-fact"><div class="fl">Förderart</div><div class="fv">Direktzuschuss, KfW 266</div></div>
+      <div class="gzw-fact"><div class="fl">Zuschusshöhe</div><div class="fv">30 % der förderfähigen Kosten</div></div>
+      <div class="gzw-fact"><div class="fl">Max. förderfähig</div><div class="fv">100.000 € je entstehender Wohneinheit</div></div>
+      <div class="gzw-fact"><div class="fl">Max. Zuschuss/Objekt</div><div class="fv">300.000 €</div></div>
+      <div class="gzw-fact"><div class="fl">Energetische Voraussetzung</div><div class="fv">Mind. EH 85 EE (bzw. EH Denkmal EE)</div></div>
+      <div class="gzw-fact"><div class="fl">Mindesthaltedauer</div><div class="fv">10 Jahre Wohnnutzung</div></div>
+      <div class="gzw-fact"><div class="fl">Antragsvoraussetzung</div><div class="fv">Bauantrag/-anzeige ≥ 5 Jahre zurückliegend, mind. 1 neue WE</div></div>
+      <div class="gzw-fact"><div class="fl">Kombinierbar</div><div class="fv">Mit BEG WG kombinierbar (getrennte Kostentöpfe: Umbau hier, energetische Sanierung dort)</div></div>
+    </div>
+    <div class="d-grid">
+      <div>
+        <div class="sec-h">Rechenbeispiel (Annahme)</div>
+        <div class="ms"><div class="ms-n">1</div><div><div class="ms-name">Neu entstehende Wohneinheiten</div><div class="ms-note">${we||'—'} WE</div></div></div>
+        <div class="ms"><div class="ms-n">2</div><div><div class="ms-name">Angenommene Umbaukosten je WE</div><div class="ms-note">${investWe?_eur(investWe):'—'}</div></div></div>
+        <div class="ms"><div class="ms-n">3</div><div><div class="ms-name">Umbaukosten gesamt</div><div class="ms-note price">${_eur(we*investWe)}</div></div></div>
+      </div>
+      <div>
+        <div class="sec-h">Förderrechnung</div>
+        <div class="kask">
+          ${(d.kask||[]).map(k=>`<div class="kask-row"><span class="kl">${esc(k.l)}${k.sub?`<br><small>${esc(k.sub)}</small>`:''}</span><span class="kv${k.pos?' pos':''}">${esc(k.v)}</span></div>`).join('')}
+          <div class="kask-row sum"><span class="kl">Eigenanteil (Umbau)</span><span class="kv">${esc(d.netto)}</span></div>
+        </div>
+        <div class="doc-cap-note"><b>Hinweis:</b> Die tatsächlichen Umbaukosten sind objektspezifisch — die Summe oben ist eine Annahme auf Basis eines angenommenen Betrags je Wohneinheit, damit sich der mögliche Zuschuss selbst hochrechnen lässt.</div>
+      </div>
+    </div>
+    <div class="isfp">
+      <div class="isfp-txt">
+        <div class="isfp-h">Wir begleiten Sie gerne bei der Antragstellung</div>
+        <p>Von der Prüfung der Fördervoraussetzungen über die Einbindung einer Energieeffizienz-Expertin/eines -Experten bis zur vollständigen Antragstellung bei der KfW unterstützen wir Sie. Fordern Sie ein unverbindliches Angebot an.</p>
+      </div>
+      <a class="isfp-btn" href="${gzwMailto()}">Angebot anfragen →</a>
+    </div>
+    <div class="note"><a href="${GZW_LINK}" target="_blank" rel="noopener">Merkblatt &amp; Richtlinie ansehen →</a></div>
+    ${footLine(4+i,total)}
+  </div>`;
+}
+function cmpName(p){ return p.id==='beg' ? 'BEG EM' : p.name; }
+function deNum(n, dec){ dec=dec||0; return Number(n).toLocaleString('de-DE',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+function dualCell(perM2, unit){
+  const p=_num(perM2), qm=_qm(), tot=p*qm;
+  if(!p) return `<span class="dv-t">—</span>`;
+  return `<span class="dv-t">${deNum(Math.round(tot))} ${unit}/a</span><span class="dv-m">${deNum(p, p%1?1:0)} ${unit}/m²a</span>`;
+}
+function enCard(label, perM2, unit, hl){
+  const p=_num(perM2), tot=p*_qm();
+  return `<div class="en-card${hl?' hl':''}"><div class="en-l">${label}</div>
+    <div class="en-t">${p?deNum(Math.round(tot)):'—'}<span class="en-u"> ${unit}/a</span></div>
+    <div class="en-m">${p?deNum(p, p%1?1:0):'—'} ${unit}/m²a</div></div>`;
+}
+function istMetric(label, perM2, unit, delta){
+  const p=_num(perM2), tot=p*_qm();
+  return `<div class="metric"><div class="ml">${label}</div>
+    <div class="mv">${p?deNum(Math.round(tot)):'—'}<span class="mu"> ${unit}/a</span>${delta?`<span class="delta">${delta}</span>`:''}</div>
+    <div class="msub">${p?deNum(p, p%1?1:0):'—'} ${unit}/m²a</div></div>`;
+}
+function defaultStamp(){
+  return `<div class="stamp"><div class="stamp-ring">
+    <div class="stamp-mid">DGX</div>
+    <div class="stamp-sub">GMBH</div>
+  </div></div>`;
+}
+function eekBar(fromC, toC, height){
+  return `<div class="eek"${height?` style="height:${height}px"`:''}>` + EEK.map(c=>{
+    let cls='sl';
+    if(c===toC) cls+=' to';
+    else if(c===fromC) cls+=' from';
+    return `<span class="${cls}" data-c="${c}">${c}</span>`;
+  }).join('') + `</div>`;
+}
+const LOGO = '<svg viewBox="136 223 570 150" xmlns="http://www.w3.org/2000/svg"><path d="M293.15,242.86c-15.49-13.21-38.37-19.82-68.63-19.82h-88.03v149.2h88.03c30.27,0,53.14-6.61,68.63-19.82c14.92-12.65,22.38-30.91,22.38-54.78C315.53,273.77,308.07,255.51,293.15,242.86z M224.51,325.35H191.9v-55.42h32.61c23.73,0,35.6,9.24,35.6,27.71C260.11,316.11,248.24,325.35,224.51,325.35z"/><path d="M511.62,297.64c0-3.12-0.36-7.39-1.06-12.79h-94.85v31.97h35.38c-6.54,9.95-18.33,14.92-35.38,14.92c-27,0-40.5-11.37-40.5-34.1c0-22.73,13.5-34.1,40.5-34.1c15.63,0,26.86,4.26,33.68,12.79h59.47c-4.41-17.76-14.36-31.33-29.84-40.71c-15.92-9.8-37.02-14.71-63.3-14.71c-31.41,0-55.35,6.75-71.83,20.25c-16.06,13.21-24.09,32.05-24.09,56.48c0,24.44,8.03,43.27,24.09,56.48c16.48,13.5,40.42,20.25,71.83,20.25c31.4,0,55.34-6.75,71.83-20.25C503.59,340.91,511.62,322.08,511.62,297.64z"/><polygon points="705.41,223.04 637.2,223.04 598.83,265.03 560.47,223.04 492.26,223.04 560.47,297.64 485.89,372.24 556.24,372.24 598.83,330.25 637.2,372.24 705.41,372.24 637.2,297.64"/></svg>';
+function objMeta(){ return isNWG() ? `${esc(S.obj.qm)} m² NGF · Bj. ${esc(S.obj.baujahr)}` : `${esc(S.obj.we)} WE · Bj. ${esc(S.obj.baujahr)}`; }
+function objMetaLong(){ return isNWG() ? `${esc(S.obj.qm)} m² NGF · Baujahr ${esc(S.obj.baujahr)}` : `${esc(S.obj.we)} WE · Baujahr ${esc(S.obj.baujahr)}`; }
+function objHead(){ return `<div class="obj"><b>${esc(S.obj.adresse)}</b><br>${esc(S.obj.plzort)}<br>${objMeta()}</div>`; }
+function footLine(n,tot){ return `<div class="foot"><span>DGX · Fördermittelkompass · ${esc(S.obj.adresse)}</span><span>Seite ${n} / ${tot}</span></div>`; }
+
+/* ---------- Dokument rendern ---------- */
+function renderDoc(){
+  recalcBeg();
+  recalcGzw();
+  recalcIbb();
+  recalcIbbco2();
+  recalcIbbjw();
+  for(const id in S.prog){ if(id!=='beg'&&id!=='gzw'&&id!=='ibbsolarl'&&id!=='ibbco2'&&id!=='ibbjunges'&&!isInfoProg(id)) recalcKfw(id); }
+  const active = PK().filter(p=>S.progAktiv.includes(p.id));
+  const activeCmp = active.filter(p=>p.id!=='gzw'&&p.id!=='ibbsolarl'&&p.id!=='ibbco2'&&p.id!=='ibbjunges'&&!isInfoProg(p.id));
+  const total = 5 + active.length;
+  const fazitN = total - 1;
+  let n = 0;
+  let html = '';
+
+  /* COVER */
+  const coverImg = S.obj.bild ? `<div class="cover-photo"><img src="${S.obj.bild}"></div>` : `<div class="cover-ph-empty">Deckblatt-Bild</div>`;
+  html += `<div class="page cover">
+    ${coverImg}<div class="cover-scrim"></div>
+    <div class="cover-inner">
+      <div class="cover-top">${LOGO}<div class="az">Az. ${esc(S.obj.az)}<br>${esc(S.obj.datum)}<br>Vertraulich</div></div>
+      <div class="cover-mid">
+        <div class="cover-kick">Entscheidungsgrundlage Förderung</div>
+        <h1>Förder&shy;mittel&shy;kompass</h1>
+        <div class="cover-obj"><div class="adr">${esc(S.obj.adresse)}</div><div class="sub">${esc(S.obj.plzort)}<br>${objMetaLong()}</div></div>
+      </div>
+    </div></div>`;
+
+  /* IST-ZUSTAND */
+  n=2;
+  const dPe = pctDelta(S.ist.peIst,S.ist.peZiel), dEe=pctDelta(S.ist.eeIst,S.ist.eeZiel), dCo=pctDelta(S.ist.co2m2Ist,S.ist.co2m2Ziel);
+  html += `<div class="page">
+    <div class="ph"><div><div class="kick">01 · Ist-Zustand</div><h2>Wo das Gebäude heute steht.</h2></div>${objHead()}</div>
+    <div class="rule"></div>
+    <div class="split">
+      <div class="split-col now"><div class="split-head"><span class="lab">Heute</span>${isNWG()?`<span class="kls-dot" style="background:${S.ist.farbeIst}"></span>`:`<span class="kls">${esc(S.ist.eekIst)}</span>`}</div>
+        ${istMetric('Primärenergiebedarf', S.ist.peIst, 'kWh')}
+        ${istMetric('Endenergiebedarf', S.ist.eeIst, 'kWh')}
+        ${istMetric('CO₂-Emissionen', S.ist.co2m2Ist, 'kg')}
+      </div>
+      <div class="split-col goal"><div class="split-head"><span class="lab">${isNWG()?'Zielvariante':'Nach Sanierung'}</span>${isNWG()?`<span class="kls-dot" style="background:${S.ist.farbeZiel}"></span>`:`<span class="kls">${esc(S.ist.eekZiel)}</span>`}</div>
+        ${istMetric('Primärenergiebedarf', S.ist.peZiel, 'kWh', dPe)}
+        ${istMetric('Endenergiebedarf', S.ist.eeZiel, 'kWh', dEe)}
+        ${istMetric('CO₂-Emissionen', S.ist.co2m2Ziel, 'kg', dCo)}
+      </div>
+    </div>
+    ${isNWG()?'':`<div class="sec-h">Energieeffizienzklasse</div>
+    ${eekBar(S.ist.eekIst,S.ist.eekZiel)}
+    <div class="eek-cap"><span class="f">${esc(S.ist.eekIst)} · ${esc(S.ist.peIst)}</span><span class="arr">→</span><span class="t">${esc(S.ist.eekZiel)} · ${esc(S.ist.peZiel)} kWh/m²a</span><span style="color:var(--steel)">· nach Sanierung</span></div>
+    ${isWPB()?`<div class="wpb-badge"><span class="wpb-tag">Worst Performing Building</span><p>Das Gebäude fällt mit Effizienzklasse H in die energetisch schwächsten <b>~25 % des Bestands</b>. Ab Q1 2027 können hierfür laut aktuellem KfW-Entwurf höhere Fördersätze für Hüllmaßnahmen sowie ein zusätzlicher WPB-Bonus in den KfW-Effizienzhaus-Programmen greifen — sprechen Sie die Details und den optimalen Antragszeitpunkt gern mit uns ab.</p></div>`:''}`}
+    ${isNWG()&&isWPB()?`<div class="wpb-badge"><span class="wpb-tag">Worst Performing Building</span><p>Das Gebäude gilt als Worst Performing Building. Ab Q1 2027 kann hierfür laut aktuellem Entwurf ein <b>zusätzlicher Bonus von 5 % der Investitionskosten</b> auf Dämmmaßnahmen der Gebäudehülle gelten — sprechen Sie die Details und den optimalen Antragszeitpunkt gern mit uns ab.</p></div>`:''}
+    <div style="margin-top:9mm"></div>
+    <div class="sec-h">Gebäude-Ampel</div>
+    <div class="ampel">
+      <div class="ampel-group"><h4>Gebäudehülle</h4>${S.ist.huelle.map(a=>`<div class="ampel-row"><span class="dot ${a.s}"></span><span class="bt">${esc(a.n)}</span><span class="st">${esc(a.note)}</span></div>`).join('')}</div>
+      <div class="ampel-group"><h4>Anlagentechnik</h4>${S.ist.technik.map(a=>`<div class="ampel-row"><span class="dot ${a.s}"></span><span class="bt">${esc(a.n)}</span><span class="st">${esc(a.note)}</span></div>`).join('')}</div>
+    </div>
+    ${footLine(2,total)}
+  </div>`;
+
+  /* VERGLEICH */
+  const cols = `grid-template-columns:1.15fr ${activeCmp.map(()=>'1fr').join(' ')}`;
+  function cmpCell(p, inner){ return `<div class="c${p.id===S.progRec?' rec':''}">${inner}</div>`; }
+  const rows = [
+    {rl:'Nötige Maßnahmen', f:p=>{ const ms=(S.prog[p.id].massnahmen||[]); return `<div class="mrow${ms.length>6?' dense':''}">${ms.map(m=>`<span class="mchip">${esc(shortMass(m.m))}</span>`).join('')}</div>`; }},
+    {rl:'Erreichte Klasse', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].klasse)}</span><span class="cs">${esc(S.prog[p.id].klasseKwh)}</span>`},
+    {rl:'Bewertung', f:p=>p.id==='kfw85eegzw'?`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].klasse)}</span><span class="cs">${esc(S.prog[p.id].klasseKwh)}</span>`:`<span class="cmp-farb" style="background:${S.prog[p.id].farbe||'#ccc'}"></span>`},
+    {rl:'Endenergiebedarf', f:p=>dualCell(S.prog[p.id].ee,'kWh')},
+    {rl:'Primärenergiebedarf', f:p=>dualCell(S.prog[p.id].pe,'kWh')},
+    {rl:'CO₂-Emissionen', f:p=>dualCell(S.prog[p.id].co2,'kg')},
+    {rl:'Investition', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].invest)}</span>${(!isNWG()&&S.prog[p.id].investWE)?`<span class="cs">${esc(S.prog[p.id].investWE)}</span>`:''}`},
+    {rl:'Förderung', f:p=>`<span class="fig pos">${esc(S.prog[p.id].foerderung)}</span><span class="cs">${esc(S.prog[p.id].foerderNote)}</span>`},
+    {rl:'Eigenanteil', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].netto)}</span>`},
+    {rl:'CO₂-Reduktion', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].co2Red)}</span>${S.prog[p.id].co2Rest?`<span class="cs">${esc(S.prog[p.id].co2Rest)}</span>`:''}`}
+  ].filter(r=> !(isNWG() && r.rl==='Erreichte Klasse') && !(!isNWG() && r.rl==='Bewertung'));
+  html += `<div class="page">
+    <div class="ph"><div><div class="kick">02 · Programmvergleich</div><h2>Variantenvergleich</h2></div>${objHead()}</div>
+    <div class="rule"></div>
+    <div class="cmp${activeCmp.length>=5?' cmp-dense':''}${activeCmp.length>=7?' cmp-xdense':''}">
+      <div class="cmp-head" style="${cols}">
+        <div class="c"></div>
+        ${activeCmp.map(p=>`<div class="c${p.id===S.progRec?' rec':''}"><div class="pt">${esc(p.typ)}</div><div class="pn">${esc(cmpName(p))}</div>${p.id===S.progRec?'<span class="cmp-rec-badge">Empfehlung</span>':''}</div>`).join('')}
+      </div>
+      <div class="cmp-body">
+        ${rows.map(r=>`<div class="cmp-r" style="${cols}"><div class="c rl">${r.rl}</div>${activeCmp.map(p=>cmpCell(p,r.f(p))).join('')}</div>`).join('')}
+      </div>
+    </div>
+    ${S.progAktiv.includes('gzw')?`<div class="gzw-banner"><span class="gzw-banner-tag">+ Zusatzförderung</span> Zusätzlich möglich: <b>Gewerbe zu Wohnen (KfW 266)</b> — 30 % Zuschuss auf die Umbaukosten je neu entstehender Wohneinheit, bis 100.000 €/WE (max. 300.000 € gesamt). Details siehe eigene Programmseite.</div>`:''}
+    ${S.progAktiv.includes('ibbsolarl')?(()=>{ const c=ibbCalc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB SolarPLUS L</b> — Zuschuss des Landes Berlin für Photovoltaik, Speicher und Messinfrastruktur (${c.g.a} % / ${c.g.b} % je Modul, modulbezogene Höchstbeträge)${c.foe>0?`. Für die geplanten Module: <b>${_eur(c.foe)} Zuschuss</b>`:''}. Details siehe eigene Programmseite.</div>`; })():''}
+    ${S.progAktiv.includes('ibbco2')?(()=>{ const c=ibbco2Calc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB CO2-Sparende Gebäude</b> — zinsloses Darlehen nach erreichter CO₂-Einsparung (${IBBCO2_SATZ} € je kg CO₂e und m²)${c.basis>0?`, hier rund <b>${_eur(c.basis)}</b>${c.bonus>0?` inkl. ${_eur(c.bonus)} Zuschuss`:''}`:''}. Details siehe eigene Programmseite.</div>`; })():''}
+    ${S.progAktiv.includes('ibbjunges')?(()=>{ const c=ibbjwCalc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB Junges Wohnen</b> — zinsloses Baudarlehen und Baukostenzuschuss für Wohnplätze für Studierende und Auszubildende (ab ${IBBJW_MIN_PLAETZE} Plätzen)${c.gesamt>0?`, hier rund <b>${_eur(c.gesamt)}</b> Gesamtförderung`:''}. Details siehe eigene Programmseite.</div>`; })():''}
+    ${(()=>{ const infos=active.filter(p=>isInfoProg(p.id)); return infos.length?`<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Ergänzend geprüft: <b>${infos.map(p=>esc(p.name)).join('</b>, <b>')}</b> — diese Berliner Programme sind je nach Vorhaben zusätzlich nutzbar. Erläuterung auf den folgenden Seiten.</div>`:''; })()}
+    <div class="note">Alle Angaben indikativ · Stand 2026</div>
+    ${footLine(3,total)}
+  </div>`;
+
+  /* DETAILSEITEN */
+  active.forEach((p,i)=>{
+    const d = S.prog[p.id];
+    if(p.id==='gzw'){ html += gzwDetailHtml(p,d,i,total); return; }
+    if(p.id==='ibbsolarl'){ html += ibbDetailHtml(p,d,i,total); return; }
+    if(p.id==='ibbco2'){ html += ibbco2DetailHtml(p,d,i,total); return; }
+    if(p.id==='ibbjunges'){ html += ibbjwDetailHtml(p,d,i,total); return; }
+    if(isInfoProg(p.id)){ html += infoDetailHtml(p,d,i,total); return; }
+    const isRec = p.id===S.progRec;
+    const kaskSum = d.netto;
+    html += `<div class="page">
+      <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)}${isRec?' · Empfehlung':''}</div><h2>${esc(p.name)}.</h2></div>
+        <div class="obj"><b>${esc(p.typ)}</b><br>${esc(p.name)}${(isNWG()&&p.id!=='kfw85eegzw')?`<br>Bewertung <span class="farb-chip" style="background:${d.farbe||'#ccc'}"></span>`:`<br>Ziel Klasse ${esc(d.klasse)}`}</div></div>
+      <div class="rule"></div>
+      <div class="d-lead">${esc(d.lead)}</div>
+      <div class="sec-h">Energiebilanz nach Sanierung</div>
+      <div class="d-energy">
+        ${enCard('Endenergiebedarf', d.ee, 'kWh', isRec)}
+        ${enCard('Primärenergiebedarf', d.pe, 'kWh', isRec)}
+        ${enCard('CO₂-Emissionen', d.co2, 'kg', isRec)}
+      </div>
+      <div class="d-grid">
+        <div>
+          <div class="sec-h">Nötige Maßnahmen</div>
+          ${(()=>{ const begPc = (p.id==='beg' && !isNWG()) ? begPoolCalc() : null; const gzwPc = p.id==='kfw85eegzw' ? begPoolCalcFor(d.massnahmen,_num(d.we)||1) : null; return (d.massnahmen||[]).map((m,idx)=>{ let priceHtml=''; if(p.id==='beg'){ const c=begMeasureCalc(m,begPc); if(c.invest){ if(c.noFoe){ priceHtml=`<div class="ms-note price">${_eur(c.invest)} · <span class="ms-cap">nicht förderfähig</span></div>`; } else { const ffNote = Math.abs(c.ff-c.invest)>1 ? ` · förderfähig ${_eur(c.ff)}` : ''; priceHtml=`<div class="ms-note price">${_eur(c.invest)}${ffNote} · ${deNum(c.satz,c.satz%1?1:0)} % = ${_eur(c.foe)} Förderung</div>`; } } } else if(p.id==='kfw85eegzw'){ const topf=m.custom?'frei':begTopfFor(m.m); const i=_num(m.invest); if(nichtFoerderfaehig(m)){ priceHtml=i?`<div class="ms-note price">${_eur(i)} · <span class="ms-cap">nicht förderfähig</span></div>`:''; } else { let foe=0, satz=0; if(topf==='pool15'){ const share=gzwPc.gesamt>0?i/gzwPc.gesamt:0; foe=gzwPc.foe*share; satz=gzwPc.gesamt>0?(gzwPc.foe/gzwPc.gesamt*100):15; } else if(topf==='heiztausch'){ const ff=Math.min(i,heatCap(_num(d.we)||1)); satz=30; foe=ff*0.30; } priceHtml=i?`<div class="ms-note price">${_eur(i)} · ${deNum(satz,satz%1?1:0)} % = ${_eur(foe)} Förderung aus BEG EM</div>`:''; } } else { const mSatz=_num(d.satz); const noFoe=m.noFoe||nichtFoerderfaehig(m); const foe=_num(m.invest)*mSatz/100; priceHtml=_num(m.invest)?`<div class="ms-note price">${noFoe?`${_eur(_num(m.invest))} · <span class="ms-cap">nicht förderfähig</span>`:`${_eur(_num(m.invest))} · ${deNum(mSatz,mSatz%1?1:0)} % = ${_eur(foe)} Förderung`}</div>`:''; } return `<div class="ms"><div class="ms-n">M${idx+1}</div><div><div class="ms-name">${esc(m.m)} <span class="ms-badge ${m.b}">${m.b==='req'?'Voraussetzung':'Optional'}</span></div>${m.note?`<div class="ms-note">${esc(m.note)}</div>`:''}${priceHtml}</div></div>`; }).join(''); })()}
+        </div>
+        <div>
+          <div class="sec-h">Förderrechnung</div>
+          <div class="kask">
+            ${(d.kask||[]).map(k=>`<div class="kask-row"><span class="kl">${esc(k.l)}</span><span class="kv${k.pos?' pos':''}">${esc(k.v)}</span></div>`).join('')}
+            <div class="kask-row sum"><span class="kl">Eigenanteil</span><span class="kv">${esc(kaskSum)}</span></div>
+          </div>
+          ${p.id==='beg'?(isNWG()
+            ? `<div class="doc-cap-note"><b>Förderfähige Kosten (Nichtwohngebäude):</b> Bei BEG Einzelmaßnahmen gelten nutzungsabhängige Höchstgrenzen je m² NGF — Richtwert Gebäudehülle ${esc(S.obj.begCapM2)} €/m² NGF (≈ ${_eur(_num(S.obj.begCapM2)*_qm())} bei ${esc(S.obj.qm)} m² NGF). Die förderfähigen Kosten für die Heizung werden individuell ermittelt.</div>`
+            : ''):''}
+          <div class="d-res">
+            ${p.id==='kfw85eegzw'
+              ? `<div class="rc${isRec?' hl':''}"><div class="rl2">Investition je entstandener WE</div><div class="rv">${_num(d.we)?_eur(Math.round(_num(d.invest)/_num(d.we))):'—'}</div></div>`
+              : isNWG()
+              ? `<div class="rc${isRec?' hl':''}"><div class="rl2">Investition je m² NGF</div><div class="rv">${_qm()?_eur(Math.round(_num(d.invest)/_qm())):'—'}</div></div>`
+              : `<div class="rc${isRec?' hl':''}"><div class="rl2">Erreichte Klasse</div><div class="rv">${esc(d.klasse)}</div></div>`}
+            <div class="rc"><div class="rl2">CO₂-Reduktion</div><div class="rv">${esc(d.co2Red)}</div></div>
+          </div>
+          ${(isNWG()&&p.id!=='kfw85eegzw')?'':`<div class="d-eek-mini">
+            ${eekBar(S.ist.eekIst,d.klasse,22)}
+            <div class="eek-cap"><span class="f">${esc(S.ist.eekIst)}</span><span class="arr">→</span><span class="t">${esc(d.klasse)}</span><span style="color:var(--steel)">· Zielklasse</span></div>
+          </div>`}
+        </div>
+      </div>
+      ${p.id==='beg'?(isNWG()
+        ? `<div class="isfp">
+        <div class="isfp-txt">
+          <div class="isfp-h">Wir begleiten Sie gerne bei der Antragstellung</div>
+          <p>Von der Ermittlung der förderfähigen Kosten über die Auswahl der passenden Einzelmaßnahmen bis zur vollständigen Antragstellung unterstützen wir Sie. Fordern Sie ein unverbindliches Angebot an.</p>
+        </div>
+        <a class="isfp-btn" href="${begMailtoNwg()}">Angebot anfragen →</a>
+      </div>`
+        : `<div class="isfp">
+        <div class="isfp-txt">
+          <div class="isfp-h">Empfehlung: Individueller Sanierungsfahrplan (iSFP)</div>
+          <p>Wer sich für Einzelmaßnahmen entscheidet, sollte vorab einen individuellen Sanierungsfahrplan erstellen lassen. Er sichert <b>höhere förderfähige Investitionskosten und einen iSFP-Bonus ab einer bestimmten Summe</b>. Wir erstellen Ihren Fahrplan gern.</p>
+        </div>
+        <a class="isfp-btn" href="${begMailto()}">Angebot anfragen →</a>
+      </div>`):''}
+      ${(p.id==='beg' && !isNWG() && isWPB())?`<div class="doc-cap-note"><b>Hinweis Worst Performing Building (ab Q1 2027):</b> Bitte beachten Sie: Ab Q1 2027 soll für Worst Performing Buildings ein zusätzlicher Bonus von 5 Prozentpunkten auf Dämmmaßnahmen der Gebäudehülle gelten. Fenster, Außentüren und sommerlicher Wärmeschutz sind ausgenommen. Sofern Sie Dämmmaßnahmen planen, kann es sinnvoll sein, den Antrag bis zum Inkrafttreten zurückzustellen. Sprechen Sie die Einzelheiten bitte mit uns ab.</div>`:''}
+      ${(p.id==='beg' && isNWG() && isWPB())?`<div class="doc-cap-note"><b>Hinweis Worst Performing Building (ab Q1 2027):</b> Bitte beachten Sie: Das Gebäude gilt als Worst Performing Building. Ab Q1 2027 soll hierfür ein zusätzlicher Bonus von 5 % der Investitionskosten auf Dämmmaßnahmen der Gebäudehülle gelten. Sofern Sie Dämmmaßnahmen planen, kann es sinnvoll sein, den Antrag bis zum Inkrafttreten zurückzustellen. Sprechen Sie die Einzelheiten bitte mit uns ab.</div>`:''}
+      ${(()=>{ if(p.id!=='beg') return ''; const si=begSplitInfo(); return si?`<div class="doc-cap-note"><b>Hinweis zum Förderrahmen:</b> Der gemeinsame Fördertopf Gebäudehülle/Anlagentechnik ist mit iSFP auf max. ${_eur(si.capMit)} pro Jahr und Wohneinheit begrenzt (Sockel ${_eur(si.capOhne)} zu 15 % + Mehrbetrag zu 20 %). Ihre geplanten Maßnahmen summieren sich auf ${_eur(si.gesamt)} — aktuell in einem Jahr davon förderfähig: ${_eur(si.foerderfaehig)}, das entspricht ${_eur(si.foe)} Förderung. Teilen Sie die Maßnahmen auf ${si.years} Jahre auf, lässt sich die Förderung auf bis zu <b>${_eur(si.totalFoe)}</b> steigern.</div>`:''; })()}
+      ${p.id!=='beg'?(()=>{ const perWE=kfwMaxWE(p.id), we=_num(S.obj.we)||0, tot=perWE*we; const capTot=Math.min(NWG_EG_M2_CAP*_qm(), NWG_EG_ABS_CAP);
+        const info = p.id==='kfw85eegzw'
+          ? `Um den Standard KfW 85 EE zu erreichen, gibt es von der KfW-Bank <b>keinen Tilgungszuschuss</b> auf den Kredit. Wir empfehlen daher, die nötigen Maßnahmen über die <b>BEG Einzelmaßnahmen</b> fördern zu lassen — die dafür erreichbare Förderung haben wir oben bei den Maßnahmen bereits für Sie kalkuliert.`
+          : isNWG()
+          ? `Bei Nichtwohngebäuden gelten die maximal förderfähigen Kredit-/Investitionskosten von <b>${deNum(NWG_EG_M2_CAP,0)} €/m² NGF</b>, gedeckelt auf max. <b>10 Mio. €</b>${_qm()?` (≈ ${_eur(capTot)} bei ${esc(S.obj.qm)} m² NGF)`:''}.`
+          : `Der maximale Förderkredit (KfW 261) beträgt bei ${esc(p.name)} <b>${_eur(perWE)} pro Wohneinheit</b>${we?` — bei ${esc(S.obj.we)} WE bis zu ${_eur(tot)}`:''}.`;
+        return `<div class="isfp">
+        <div class="isfp-txt">
+          <div class="isfp-h">Wir begleiten Ihr KfW-Effizienzhaus</div>
+          <p>${info} Von der Förderberechnung bis zur Antragstellung über Ihren Finanzierungspartner begleiten wir Sie. <a href="${KFW_LINK}" target="_blank" rel="noopener">Aktuelle Zinsen &amp; Förderbedingungen ansehen →</a></p>
+        </div>
+        <a class="isfp-btn" href="${kfwMailto(p)}">Beratung anfragen →</a>
+      </div>`; })():''}
+      ${(p.id!=='beg'&&p.id!=='kfw85eegzw')?(()=>{ const inv=_num(d.invest); if(!inv) return '';
+        const annuity=(rate,years,principal)=>{ const r=rate/100/12, n=years*12; const pay=r===0?principal/n:principal*r/(1-Math.pow(1+r,-n)); return pay*n; };
+        const kfwCost=annuity(2,10,inv), marktCost=annuity(4.5,10,inv), diff=marktCost-kfwCost;
+        return `<div class="doc-cap-note"><b>Zinsvorteil KfW-Kredit:</b> Über die KfW profitieren Sie zusätzlich zum Tilgungszuschuss von deutlich günstigeren Krediten — schon ab rund 2 % effektivem Jahreszins. Bei ${_eur(inv)} Kreditsumme und 10 Jahren Laufzeit: Gesamtkosten (Zins &amp; Tilgung) bei 2 % KfW-Zins ≈ ${_eur(kfwCost)}, bei einem marktüblichen Sanierungskredit von 4,5 % ≈ ${_eur(marktCost)} — ein Zinsvorteil von rund <b>${_eur(diff)}</b> über die Laufzeit. <a href="${KFW_LINK}" target="_blank" rel="noopener">Aktuelle Zinsen ansehen →</a></div>`; })():''}
+      ${footLine(4+i,total)}
+    </div>`;
+  });
+
+  /* FAZIT */
+  const fz = S.fazit || {};
+  html += `<div class="page" data-fazit="1">
+    <div class="ph"><div><div class="kick">${String(fazitN).padStart(2,'0')} · Fazit</div><h2>Fazit &amp; Empfehlung.</h2></div>${objHead()}</div>
+    <div class="rule"></div>
+    <div class="fazit-body">
+      ${fz.lead?`<p class="fazit-lead">${esc(fz.lead)}</p>`:''}
+      ${fz.text?esc(fz.text).split(/\n{2,}/).filter(t=>t.trim()).map(t=>`<p class="fazit-text">${t.replace(/\n/g,'<br>')}</p>`).join(''):''}
+      ${fz.disclaimer?`<div class="fazit-disc">${esc(fz.disclaimer)}</div>`:''}
+    </div>
+    <div class="sign-block">
+      <div class="sign-left">
+        <div class="sign-ort">${esc(fz.ort||'')}${fz.ort?', ':''}${esc(S.obj.datum)}</div>
+        <div class="sign-name">${esc(fz.unterzeichner||'')}</div>
+        <div class="sign-fn">${esc(fz.funktion||'')}</div>
+      </div>
+      <div class="sign-right">${defaultStamp()}</div>
+    </div>
+    ${footLine(fazitN,total)}
+  </div>`;
+
+  /* GLOSSAR */
+  html += `<div class="page">
+    <div class="ph"><div><div class="kick">${String(total).padStart(2,'0')} · Glossar</div><h2>Begriffe &amp; Berechnungen.</h2></div>${objHead()}</div>
+    <div class="rule"></div>
+    <div class="gloss">
+      <div class="gloss-col">
+        <div class="gl"><dt>Endenergiebedarf</dt><dd>Die Energiemenge, die dem Gebäude an der Systemgrenze (Zähler) zugeführt werden muss, um Heizung, Warmwasser und Lüftung zu decken — inkl. Verluste der Anlagentechnik. Angabe in <b>kWh/m²·a</b>. Das ist der Wert, der ungefähr der Abrechnung entspricht.</dd></div>
+        <div class="gl"><dt>Primärenergiebedarf</dt><dd>Berücksichtigt zusätzlich die vorgelagerte Kette (Gewinnung, Umwandlung, Transport des Energieträgers) über Primärenergiefaktoren. Er bewertet, wie „umweltschonend“ die eingesetzte Energie ist, und ist Grundlage für Effizienzklasse und Förderung. Angabe in <b>kWh/m²·a</b>.</dd></div>
+        <div class="gl"><dt>CO₂-Emissionen</dt><dd>Die jährlich durch den Energieverbrauch verursachten Treibhausgas­emissionen. Angabe als spezifischer Wert <b>kg CO₂/m²·a</b> bzw. als Gesamtwert <b>t/a</b> für das ganze Gebäude.</dd></div>
+        <div class="gl"><dt>Energieeffizienzklasse (EEK)</dt><dd>Skala von <b>A+</b> (sehr effizient) bis <b>H</b> (sehr ineffizient) im Energieausweis, abgeleitet aus dem Endenergiebedarf (bei Wohngebäuden). Sie ordnet das Gebäude ein — Klasse H markiert ein „Worst Performing Building“. Für Nichtwohngebäude gibt es keine EEK; dort erfolgt die Bewertung nutzungsabhängig.</dd></div>
+      </div>
+      <div class="gloss-col">
+        <div class="gl"><dt>Gesamtwert vs. pro m²·a</dt><dd>Der <b>Gesamtwert pro Jahr</b> bezieht sich auf das ganze Gebäude (z. B. Gesamt-CO₂ in t/a). Der <b>spezifische Wert pro m²·a</b> teilt diesen durch die Bezugsfläche und macht Gebäude unterschiedlicher Größe vergleichbar. Beide beschreiben denselben Sachverhalt aus zwei Blickwinkeln.</dd></div>
+        <div class="gl"><dt>U-Wert (Wärmedurchgangs­koeffizient)</dt><dd>Gibt an, wie viel Wärme ein Bauteil pro m² und Grad Temperatur­unterschied verliert, in <b>W/m²·K</b>. <b>Je kleiner, desto besser</b> die Dämmung. Richtwerte: Fassade ≤ 0,20 · Dach/OGD ≤ 0,14 · Fenster Ug ≤ 0,60.</dd></div>
+        <div class="gl"><dt>Tilgungszuschuss</dt><dd>Bei KfW-Krediten ein Anteil des Darlehens, der nicht zurückgezahlt werden muss — er reduziert die Restschuld und wirkt wie ein direkter Zuschuss.</dd></div>
+        <div class="gl"><dt>Förderfähige Kosten</dt><dd>Der Teil der Investition, auf den der Fördersatz angewandt wird. Er ist je Programm gedeckelt (z. B. Heizung nach Wohneinheiten) — deshalb kann die tatsächliche Förderung unter „Fördersatz × Gesamtinvestition“ liegen.</dd></div>
+      </div>
+    </div>
+    ${footLine(total,total)}
+  </div>`;
+
+  document.getElementById('stage').innerHTML = html;
+  paginateFazit();
+}
+/* Fazit-Seite umbrechen statt abschneiden, wenn der Text zu lang wird */
+function paginateFazit(){
+  const stage=document.getElementById('stage');
+  let p1=stage.querySelector('.page[data-fazit="1"]'); if(!p1) return;
+  const probe=document.createElement('div');
+  probe.style.cssText='position:absolute;height:297mm;visibility:hidden;pointer-events:none';
+  stage.appendChild(probe); const A4=probe.offsetHeight; probe.remove();
+  if(!A4 || p1.offsetHeight<=A4+1) return;
+  const body1=p1.querySelector('.fazit-body');
+  const sign=p1.querySelector('.sign-block');
+  const foot=p1.querySelector('.foot');
+  let cur=p1, guard=0;
+  while(cur.offsetHeight>A4+1 && guard++<12){
+    const body=cur.querySelector('.fazit-body');
+    if(!body || body.children.length<=1) break;
+    const next=document.createElement('div');
+    next.className='page'; next.setAttribute('data-fazit','n');
+    next.innerHTML=`<div class="ph"><div><div class="kick">Fazit · Fortsetzung</div><h2>Fazit &amp; Empfehlung.</h2></div>${objHead()}</div><div class="rule"></div><div class="fazit-body"></div>`;
+    cur.insertAdjacentElement('afterend',next);
+    const nbody=next.querySelector('.fazit-body');
+    if(sign && sign.parentElement===cur) next.appendChild(sign);
+    if(foot && foot.parentElement===cur) next.appendChild(foot);
+    let g2=0;
+    while(cur.offsetHeight>A4+1 && body.children.length>1 && g2++<200){
+      nbody.insertBefore(body.lastElementChild, nbody.firstChild);
+    }
+    const f=document.createElement('div');
+    f.className='foot';
+    f.innerHTML=`<span>DGX · Fördermittelkompass · ${esc(S.obj.adresse)}</span><span></span>`;
+    cur.appendChild(f);
+    cur=next;
+  }
+  renumberPages();
+}
+function renumberPages(){
+  const pages=[...document.querySelectorAll('#stage .page')];
+  const total=pages.length;
+  pages.forEach((pg,idx)=>{
+    const foot=pg.querySelector('.foot'); if(!foot) return;
+    const spans=foot.querySelectorAll('span');
+    if(spans[1]) spans[1].textContent=`Seite ${idx+1} / ${total}`;
+  });
+}
+function pctDelta(a,b){ const na=parseFloat(String(a).replace(/[^\d,.-]/g,'').replace('.','').replace(',','.')); const nb=parseFloat(String(b).replace(/[^\d,.-]/g,'').replace('.','').replace(',','.')); if(!na||isNaN(na)||isNaN(nb)) return ''; const d=Math.round((1-nb/na)*100); return d>0?`−${d} %`:''; }
+function shortMass(m){ return m.replace(' (WDVS)','').replace('Obergeschossdecke (OGD)','OGD').replace('Fenster-/Türaustausch','Fenster/Tür').replace('Heizungstausch ','').replace(' mit Wärmerückgewinnung','').replace('-Anlage','').replace(' / hydraul. Abgleich',''); }
+
+/* ---------- Panel aufbauen ---------- */
+function buildEekSelects(){
+  document.querySelectorAll('select[data-eek]').forEach(sel=>{
+    sel.innerHTML = EEK.map(c=>`<option value="${c}">${c}</option>`).join('');
+  });
+}
+function bindFields(){
+  document.querySelectorAll('[data-k]').forEach(el=>{
+    const path = el.dataset.k;
+    const val = getPath(S,path);
+    if(val!=null) el.value = val;
+    el.addEventListener('input',()=>{ setPath(S,path,el.value); if(path==='obj.adresse') applyAuto(); if(path==='obj.we') refreshBeg(); if(path==='ist.eekIst') renderWpbUI(); if(path==='obj.plz'||path==='obj.ort'){ syncPlzOrt(); renderBlUI(); renderProgToggles(); renderProgBlocks(); } save(); renderDoc(); });
+    el.addEventListener('change',()=>{ setPath(S,path,el.value); if(path==='obj.adresse') applyAuto(); if(path==='obj.we') refreshBeg(); if(path==='ist.eekIst') renderWpbUI(); if(path==='obj.plz'||path==='obj.ort'){ syncPlzOrt(); renderBlUI(); renderProgToggles(); renderProgBlocks(); } save(); renderDoc(); });
+  });
+}
+/* Ampel-Editor */
+function renderAmpelEditors(){
+  ['huelle','technik'].forEach(grp=>{
+    const box = document.getElementById(grp==='huelle'?'ampelHuelle':'ampelTechnik');
+    box.innerHTML = S.ist[grp].map((a,i)=>`
+      <div class="ampel-edit">
+        <div class="dots">
+          <span class="db r${a.s==='r'?' sel':''}" onclick="setAmpel('${grp}',${i},'r')"></span>
+          <span class="db y${a.s==='y'?' sel':''}" onclick="setAmpel('${grp}',${i},'y')"></span>
+          <span class="db g${a.s==='g'?' sel':''}" onclick="setAmpel('${grp}',${i},'g')"></span>
+        </div>
+        <input type="text" value="${esc(a.n)}" oninput="editAmpel('${grp}',${i},'n',this.value)" placeholder="Bauteil">
+        <input type="text" value="${esc(a.note)}" oninput="editAmpel('${grp}',${i},'note',this.value)" placeholder="Status" style="flex:0 0 78px">
+        <button class="mini-del" onclick="delAmpel('${grp}',${i})">×</button>
+      </div>`).join('');
+  });
+}
+window.setAmpel=(g,i,s)=>{ S.ist[g][i].s=s; save(); renderAmpelEditors(); renderDoc(); };
+window.editAmpel=(g,i,k,v)=>{ S.ist[g][i][k]=v; save(); renderDoc(); };
+window.delAmpel=(g,i)=>{ S.ist[g].splice(i,1); save(); renderAmpelEditors(); renderDoc(); };
+window.addAmpel=(g)=>{ S.ist[g].push({n:'Neues Bauteil',s:'y',note:''}); save(); renderAmpelEditors(); renderDoc(); };
+
+/* Gebäudetyp: Wohngebäude / Nichtwohngebäude */
+function applyTypUI(){
+  const nwg=isNWG();
+  const wg=document.getElementById('typWg'), nw=document.getElementById('typNwg');
+  if(wg) wg.classList.toggle('on',!nwg);
+  if(nw) nw.classList.toggle('on',nwg);
+  const toggle=(id,show)=>{ const el=document.getElementById(id); if(el) el.style.display=show?'':'none'; };
+  toggle('feldWE',!nwg); toggle('feldEEK',!nwg); toggle('feldNwgHint',nwg); toggle('feldNwgParams',nwg); toggle('feldFarbe',nwg);
+  const lq=document.getElementById('labQm'); if(lq) lq.textContent=nwg?'Fläche m² NGF':'Fläche m²';
+  if(nwg) renderFarbe();
+  renderWpbUI();
+}
+function renderWpbUI(){
+  const chk=document.getElementById('wpbChk'); if(!chk) return;
+  chk.checked = isWPB();
+  const tag=document.getElementById('wpbTag');
+  if(tag) tag.innerHTML = S.ist.wpbManual!=null ? 'manuell gesetzt <a href="#" onclick="resetWpb();return false;">↺ zurück auf automatisch</a>' : 'automatisch nach EEK (H = WPB)';
+}
+window.setWpb=(checked)=>{ S.ist.wpbManual=checked; save(); renderWpbUI(); renderDoc(); };
+window.resetWpb=()=>{ S.ist.wpbManual=null; save(); renderWpbUI(); renderDoc(); };
+function farbSwatches(sel, handler){
+  return NWG_FARBEN.map(c=>`<span class="${c===sel?'sel':''}" style="background:${c}" onclick="${handler}('${c}')"></span>`).join('');
+}
+function renderFarbe(){
+  const a=document.getElementById('farbeIstSw'), b=document.getElementById('farbeZielSw');
+  if(a) a.innerHTML=farbSwatches(S.ist.farbeIst,'setFarbeIst');
+  if(b) b.innerHTML=farbSwatches(S.ist.farbeZiel,'setFarbeZiel');
+}
+window.setFarbeIst=(c)=>{ S.ist.farbeIst=c; save(); renderFarbe(); renderDoc(); };
+window.setFarbeZiel=(c)=>{ S.ist.farbeZiel=c; save(); renderFarbe(); renderDoc(); };
+window.setProgFarbe=(id,c)=>{ S.prog[id].farbe=c; save(); renderProgBlocks(); renderDoc(); };
+window.setTyp=(t)=>{
+  const wasNwg = isNWG();
+  if(wasNwg){ S.progAktivNWG=S.progAktiv.slice(); S.progRecNWG=S.progRec; } else { S.progAktivWG=S.progAktiv.slice(); S.progRecWG=S.progRec; }
+  S.obj.typ=t;
+  if(t==='nwg'){
+    ['Beleuchtung','Kühlung / Klimaanlage'].forEach(n=>{ if(!S.ist.technik.some(x=>x.n===n)) S.ist.technik.push({n,s:'y',note:''}); });
+    if(!S.progAktivNWG || !S.progAktivNWG.length) S.progAktivNWG = DEFAULT.progAktivNWG.slice();
+    if(!S.progRecNWG) S.progRecNWG = DEFAULT.progRecNWG;
+    S.progAktiv = S.progAktivNWG.slice(); S.progRec = S.progRecNWG;
+  } else {
+    if(!S.progAktivWG || !S.progAktivWG.length) S.progAktivWG = DEFAULT.progAktiv.slice();
+    if(!S.progRecWG) S.progRecWG = DEFAULT.progRec;
+    S.progAktiv = S.progAktivWG.slice(); S.progRec = S.progRecWG;
+  }
+  save(); applyTypUI(); renderAmpelEditors(); renderProgToggles(); renderProgBlocks(); renderDoc();
+};
+
+/* Programm-Toggles */
+function renderProgToggles(){
+  const tog = p=>{
+    const on = S.progAktiv.includes(p.id);
+    return `<label class="prog-toggle${on?' on':''}"><input type="checkbox" ${on?'checked':''} onchange="toggleProg('${p.id}',this.checked)"> ${esc(p.name)} <span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;color:var(--steel);font-weight:500">${esc(p.typ)}</span></label>`;
+  };
+  const bund = isNWG() ? PROGRAMME_KATALOG_NWG : PROGRAMME_KATALOG_WG;
+  let html = `<div class="prog-cat">Bundesförderung</div>` + bund.map(tog).join('');
+  if(istBerlin()){
+    const calc = PROGRAMME_KOMMUNAL_BERLIN.filter(p=>!p.info), info = PROGRAMME_KOMMUNAL_BERLIN.filter(p=>p.info);
+    if(calc.length) html += `<div class="prog-cat">Kommunale Förderung · Berlin</div>` + calc.map(tog).join('');
+    if(info.length) html += `<div class="prog-cat">Kommunal · Berlin — nur Erklärseite</div>` + info.map(tog).join('');
+  }
+  document.getElementById('progToggles').innerHTML = html;
+}
+window.toggleProg=(id,on)=>{
+  if(on){ if(!S.progAktiv.includes(id)) S.progAktiv.push(id); }
+  else { S.progAktiv = S.progAktiv.filter(x=>x!==id); if(S.progRec===id) S.progRec=S.progAktiv[0]||''; }
+  // Reihenfolge nach Katalog
+  S.progAktiv.sort((a,b)=>PK().findIndex(p=>p.id===a)-PK().findIndex(p=>p.id===b));
+  if(isNWG()){ S.progAktivNWG=S.progAktiv.slice(); S.progRecNWG=S.progRec; }
+  save(); renderProgToggles(); renderProgBlocks(); renderDoc();
+};
+
+/* Programm-Datenblöcke */
+function renderProgBlocks(){
+  const box = document.getElementById('progBlocks');
+  const active = PK().filter(p=>S.progAktiv.includes(p.id));
+  if(!active.length){ box.innerHTML='<div class="hint">Noch kein Programm gewählt.</div>'; return; }
+  box.innerHTML = active.map(p=>{
+    const d = S.prog[p.id];
+    if(p.id==='beg') return begBlockHtml(p);
+    if(p.id==='gzw') return gzwBlockHtml(p);
+    if(p.id==='ibbsolarl') return ibbBlockHtml(p);
+    if(p.id==='ibbco2') return ibbco2BlockHtml(p);
+    if(p.id==='ibbjunges') return ibbjwBlockHtml(p);
+    if(isInfoProg(p.id)) return infoBlockHtml(p);
+    return `<div class="prog-block">
+      <div class="pbh">${esc(p.name)}</div>
+      <label class="rec-check"><input type="checkbox" ${S.progRec===p.id?'checked':''} onchange="setRec('${p.id}',this.checked)"> Als Empfehlung markieren</label>
+      <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editProg('${p.id}','lead',this.value)">${esc(d.lead)}</textarea></div>
+      <div class="row2">
+        <div class="fld"><label>Klasse</label><select oninput="editProg('${p.id}','klasse',this.value)" onchange="editProg('${p.id}','klasse',this.value)">${['—',...EEK].map(c=>`<option ${d.klasse===c?'selected':''}>${c}</option>`).join('')}</select></div>
+        <div class="fld"><label>Klasse-Zusatz</label><input value="${esc(d.klasseKwh)}" oninput="editProg('${p.id}','klasseKwh',this.value)"></div>
+      </div>
+      ${(isNWG()&&p.id!=='kfw85eegzw')?`<div class="fld"><label>Bewertung (Farbe)</label><div class="farb-sw">${NWG_FARBEN.map(c=>`<span class="${c===d.farbe?'sel':''}" style="background:${c}" onclick="setProgFarbe('${p.id}','${c}')"></span>`).join('')}</div></div>`:''}
+      <div class="row3">
+        <div class="fld"><label>Primär kWh/m²a</label><input value="${esc(d.pe||'')}" oninput="editProg('${p.id}','pe',this.value)"></div>
+        <div class="fld"><label>End kWh/m²a</label><input value="${esc(d.ee||'')}" oninput="editProg('${p.id}','ee',this.value)"></div>
+        <div class="fld"><label>CO₂ kg/m²a</label><input value="${esc(d.co2||'')}" oninput="editProg('${p.id}','co2',this.value)"></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label>Investition € <span class="rec-lab">Summe Maßnahmen</span></label><input id="kfwinv-${p.id}" value="${esc(d.invest)}" disabled style="opacity:.7"></div>
+        <div class="fld"><label>Tilgungszuschuss %</label><input value="${esc(d.satz||'')}" oninput="editKfw('${p.id}','satz',this.value)"></div>
+      </div>
+      ${p.id==='kfw85eegzw'?`<div class="fld"><label>Neu entstehende Wohneinheiten <span class="rec-lab">synchron mit Gewerbe zu Wohnen</span></label><input value="${esc(d.we)}" oninput="editKfw('${p.id}','we',this.value)"></div>`:''}
+      <div class="beg-totals" id="kfwtot-${p.id}">${kfwTotalsHtml(p.id)}</div>
+      <div class="row2">
+        <div class="fld"><label>CO₂-Red.</label><input value="${esc(d.co2Red)}" oninput="editProg('${p.id}','co2Red',this.value)"></div>
+        <div class="fld"><label>CO₂-Rest</label><input value="${esc(d.co2Rest)}" oninput="editProg('${p.id}','co2Rest',this.value)"></div>
+      </div>
+      <label class="beg-lbl">Maßnahmen — Katalog oder Freitext</label>
+      <div id="ms-${p.id}">${renderMsEditor(p.id)}</div>
+      <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+        <button class="mini-add" onclick="addMs('${p.id}',false)">+ Katalog-Maßnahme</button>
+        <button class="mini-add" onclick="addMs('${p.id}',true)">+ Freitext</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+/* ---------- BEG Einzelmaßnahmen: einzeln bepreist ---------- */
+function begMailto(){
+  const adr = [S.obj.adresse, S.obj.plzort].filter(Boolean).join(', ');
+  const subj = 'Angebot: Individueller Sanierungsfahrplan (iSFP)';
+  const body = `Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr}${S.obj.we?` (${S.obj.we} WE)`:''} möchte ich ein Angebot für einen individuellen Sanierungsfahrplan (iSFP) erhalten, um bei den BEG-Einzelmaßnahmen die maximalen Fördersätze zu sichern.\n\nBitte setzen Sie sich mit mir in Verbindung.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+function begMailtoNwg(){
+  const adr = [S.obj.adresse, S.obj.plzort].filter(Boolean).join(', ');
+  const subj = 'Angebot & Begleitung: BEG Einzelmaßnahmen (Nichtwohngebäude)';
+  const body = `Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr} (Nichtwohngebäude, ${S.obj.qm} m² NGF) möchte ich ein Angebot erhalten und Sie bei der Antragstellung für die BEG-Einzelmaßnahmen begleiten lassen.\n\nBitte setzen Sie sich mit mir in Verbindung.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+const KFW_LINK = 'https://www.kfw.de/inlandsfoerderung/Privatpersonen/Bestehende-Immobilie/F%C3%B6rderprodukte/Bundesf%C3%B6rderung-f%C3%BCr-effiziente-Geb%C3%A4ude-Wohngeb%C3%A4ude-Kredit-(261-262)/';
+function kfwMaxWE(id){ return KFW_MAXWE; }
+function kfwMailto(p){
+  const adr = [S.obj.adresse, S.obj.plzort].filter(Boolean).join(', ');
+  const subj = `Begleitung KfW-Effizienzhaus – ${p.name}`;
+  const body = `Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr}${S.obj.we?` (${S.obj.we} WE)`:''} interessiere ich mich für eine Sanierung zum KfW-Effizienzhaus nach dem Programm ${p.name}.\n\nBitte begleiten Sie uns bei der Förderberechnung und der Antragstellung über den Finanzierungspartner.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+// Max. förderfähige Investitionskosten für Heizung/Wärme (BEG EM, Heizungstausch — unverändert) nach Wohneinheiten
+function heatCap(n){ n=Math.max(1,n); return n<=6 ? 28000+15000*(n-1) : 103000+8000*(n-6); }
+function begHeatCap(){ return heatCap(_num(S.obj.we)||1); }
+// NWG-Heizungsförderung: förderfähige Kosten nach Flächenband (NGF)
+function nwgHeatCap(qm){
+  qm=Math.max(0,qm); let cap=28000;
+  if(qm>150) cap += (Math.min(qm,400)-150)*197;
+  if(qm>400) cap += (Math.min(qm,1000)-400)*118;
+  if(qm>1000) cap += (qm-1000)*79;
+  return cap;
+}
+function heizCapCurrent(){ return isNWG() ? nwgHeatCap(_qm()) : begHeatCap(); }
+// BEG-Reform ab 21.07.2026: gemeinsamer 15%-Topf Gebäudehülle/Anlagentechnik/Heizungsoptimierung-Effizienz
+function begKostenrahmenOhne(n){ n=Math.max(1,n); return n<=6 ? 30000+15000*(n-1) : 105000+8000*(n-6); }
+function begKostenrahmenMit(n){ n=Math.max(1,n); return n<=6 ? 60000+30000*(n-1) : 210000+15000*(n-6); }
+function nichtFoerderfaehig(m){
+  if(!m || m.custom) return false;
+  if(/photovoltaik/i.test(m.m||'')) return true;
+  if(isNWG() && m.m==='Beleuchtung (LED-Umrüstung)') return true;
+  return false;
+}
+function begTopfFor(name){
+  const pool=['Fassadendämmung (WDVS)','Dachdämmung','Obergeschossdecke (OGD)','Fenster-/Türaustausch','Kellerdeckendämmung','Vollständige Hüllsanierung','Lüftung mit Wärmerückgewinnung','Gebäudeautomation / Smart Building','Heizungsoptimierung (Effizienzverbesserung)'];
+  if(pool.includes(name)) return 'pool15';
+  if(name==='Heizungsoptimierung (Emissionsminderung)') return 'em50';
+  if(name==='Heizungstausch Wärmepumpe'||name==='Fernwärmeanschluss') return 'heiztausch';
+  return 'frei';
+}
+function begPoolCalcFor(massnahmen, we){
+  we=we||1;
+  let gesamt=0;
+  (massnahmen||[]).forEach(m=>{ if(!m.custom && begTopfFor(m.m)==='pool15') gesamt+=_num(m.invest); });
+  const capOhne=begKostenrahmenOhne(we), capMit=begKostenrahmenMit(we);
+  const sockel=Math.min(gesamt,capOhne);
+  const mehrbetrag=Math.max(0, Math.min(gesamt,capMit)-sockel);
+  const foe=sockel*0.15+mehrbetrag*0.20;
+  const foerderfaehig=sockel+mehrbetrag;
+  return {gesamt, capOhne, capMit, sockel, mehrbetrag, foe, foerderfaehig};
+}
+function begPoolCalc(){
+  const we=_num(S.obj.we)||1;
+  return begPoolCalcFor(S.prog.beg.massnahmen, we);
+}
+function kfwGzwBegCalc(){
+  const d=S.prog.kfw85eegzw; if(!d) return {poolFoe:0,heizFoe:0,totalFoe:0,we:0};
+  const we=_num(d.we)||1;
+  const pc=begPoolCalcFor(d.massnahmen, we);
+  let heizFoe=0;
+  (d.massnahmen||[]).forEach(m=>{ if(!m.custom && begTopfFor(m.m)==='heiztausch'){ const ff=Math.min(_num(m.invest), heatCap(we)); heizFoe += ff*0.30; } });
+  return { poolFoe:pc.foe, poolFF:pc.foerderfaehig, heizFoe, totalFoe: pc.foe+heizFoe, we };
+}
+function begSplitInfo(){
+  if(isNWG()) return null;
+  const pc=begPoolCalc();
+  if(pc.gesamt<=pc.capMit) return null;
+  const foePerFull = pc.capOhne*0.15 + (pc.capMit-pc.capOhne)*0.20;
+  const years = Math.ceil(pc.gesamt/pc.capMit);
+  const remainder = pc.gesamt - (years-1)*pc.capMit;
+  const sockelR=Math.min(remainder,pc.capOhne), mehrR=Math.max(0, Math.min(remainder,pc.capMit)-sockelR);
+  const foeR = sockelR*0.15+mehrR*0.20;
+  const totalFoe = (years-1)*foePerFull + foeR;
+  return { ...pc, years, totalFoe };
+}
+function begMeasureCalc(m, pc){
+  const topf = m.custom ? 'frei' : begTopfFor(m.m);
+  const i=_num(m.invest);
+  if(nichtFoerderfaehig(m)) return {topf:m.custom?'frei':begTopfFor(m.m), invest:i, ff:0, satz:0, foe:0, noFoe:true};
+  if(isNWG()){
+    const s=_num(m.satz); const ff=m.heiz?Math.min(i,heizCapCurrent()):i;
+    return {topf:'nwg', invest:i, ff, satz:s, foe:ff*s/100, noFoe:false};
+  }
+  if(topf==='pool15'){
+    const p = pc||begPoolCalc();
+    const share = p.gesamt>0 ? i/p.gesamt : 0;
+    return {topf, invest:i, ff:p.foerderfaehig*share, satz: p.gesamt>0?(p.foe/p.gesamt*100):15, foe:p.foe*share};
+  }
+  if(topf==='em50') return {topf, invest:i, ff:i, satz:50, foe:i*0.5};
+  const s=_num(m.satz); const ff=m.heiz?Math.min(i,begHeatCap()):i;
+  return {topf, invest:i, ff, satz:s, foe:ff*s/100};
+}
+function begMeasureFoe(m, pc){ return begMeasureCalc(m,pc).foe; }
+function recalcBeg(){
+  const d = S.prog.beg; if(!d) return;
+  const pc = !isNWG() ? begPoolCalc() : null;
+  let inv=0, foe=0;
+  (d.massnahmen||[]).forEach(m=>{ inv+=_num(m.invest); foe+=begMeasureFoe(m,pc); });
+  const we = _num(S.obj.we)||1;
+  d._we = we;
+  d.invest = _eur(inv);
+  d.investWE = inv ? _eur(Math.round(inv/we/100)*100)+'/WE' : '';
+  d.foerderung = _eur(foe);
+  d.foerderNote = inv ? `Ø ${Math.round(foe/inv*100)} % Zuschuss` : '';
+  d.netto = _eur(inv-foe);
+  d.kask = [ {l:'Investition gesamt',v:_eur(inv)}, {l:'Förderung gesamt',v:'− '+_eur(foe),pos:true} ];
+}
+function begTotalsHtml(){
+  const d = S.prog.beg; const pc = !isNWG() ? begPoolCalc() : null;
+  let inv=0, foe=0;
+  (d.massnahmen||[]).forEach(m=>{ inv+=_num(m.invest); foe+=begMeasureFoe(m,pc); });
+  let rows=`<div class="beg-tot-row"><span>Investition gesamt</span><b>${_eur(inv)}</b></div>`;
+  rows+=`<div class="beg-tot-row"><span>Förderung gesamt</span><b class="pos">− ${_eur(foe)}</b></div>`;
+  rows+=`<div class="beg-tot-row sum"><span>Eigenanteil</span><b>${_eur(inv-foe)}</b></div>`;
+  const si = begSplitInfo();
+  if(si) rows+=`<div class="beg-cap-note">Der 15%-Topf ist mit iSFP auf max. ${_eur(si.capMit)}/Jahr/WE begrenzt. Bei ${_eur(si.gesamt)} geplanten Kosten sind aktuell ${_eur(si.foerderfaehig)} förderfähig (${_eur(si.foe)} Förderung). Aufteilung auf ${si.years} Jahre: bis zu <b>${_eur(si.totalFoe)}</b> Förderung insgesamt möglich.</div>`;
+  return rows;
+}
+/* ---------- KfW-Programme: Förderung automatisch aus Investition × Tilgungszuschuss ---------- */
+function recalcKfw(id){
+  const d = S.prog[id]; if(!d) return;
+  // Investition = Summe der einzeln bepreisten Maßnahmen (analog BEG)
+  let sum=0, priced=false;
+  (d.massnahmen||[]).forEach(m=>{ if(m.invest!==undefined && m.invest!==''){ priced=true; sum+=_num(m.invest); } });
+  if(priced) d.invest = deNum(sum,0);
+  const c = kfwCalc(id);
+  const inv=c.inv, satz=c.satz, we=_num(S.obj.we)||1;
+  const foe = c.foe;
+  const satzTxt = deNum(satz, satz%1?1:0);
+  d.investWE  = (!isNWG() && inv) ? _eur(Math.round(inv/we/100)*100)+'/WE' : '';
+  if(id==='kfw85eegzw'){
+    const bgF = kfwGzwBegCalc().totalFoe;
+    d.foerderung = _eur(bgF);
+    d.foerderNote = 'Förderung aus BEG Einzelmaßnahmen';
+    d.netto = _eur(inv-bgF);
+  } else {
+    d.foerderung= _eur(foe);
+    d.foerderNote = `Tilgungszuschuss ${satzTxt} %`;
+    d.netto     = _eur(inv-foe);
+  }
+  d.kask = [ {l:'Investition', v:_eur(inv)} ];
+  if(c.excluded>0.5) d.kask.push({l:'davon nicht förderfähig', v:'− '+_eur(c.excluded)});
+  if(isNWG() && c.base>c.cap) d.kask.push({l:`Förderfähig · max. ${deNum(NWG_EG_M2_CAP,0)} €/m² NGF, max. 10 Mio. €`, v:_eur(c.ff)});
+  if(id==='kfw85eegzw'){
+    const bg=kfwGzwBegCalc();
+    d.kask.push({l:'Förderung', v:'− '+_eur(bg.totalFoe), pos:true});
+    d.netto = _eur(inv-bg.totalFoe);
+  } else {
+    d.kask.push({l:`Tilgungszuschuss ${satzTxt} %`, v:'− '+_eur(foe), pos:true});
+  }
+}
+function kfwCalc(id){
+  const d=S.prog[id]||{}; let sum=0, priced=false, foeBase=0;
+  (d.massnahmen||[]).forEach(m=>{ if(m.invest!==undefined && m.invest!==''){ priced=true; const v=_num(m.invest); sum+=v; if(!m.noFoe && !nichtFoerderfaehig(m)) foeBase+=v; } });
+  const inv = priced ? sum : _num(d.invest);
+  const base = priced ? foeBase : inv;
+  const satz=_num(d.satz);
+  const cap = isNWG() ? Math.min(NWG_EG_M2_CAP*_qm(), NWG_EG_ABS_CAP) : Infinity;
+  const ff = (cap && base>cap) ? cap : base;
+  return { inv, base, ff, satz, cap, foe: ff*satz/100, excluded: inv-base };
+}
+function kfwTotalsHtml(id){
+  const we=_num(S.obj.we)||1;
+  const c = kfwCalc(id);
+  let rows=`<div class="beg-tot-row"><span>Investition</span><b>${c.inv?_eur(c.inv):'—'}</b></div>`;
+  if(c.excluded>0.5) rows+=`<div class="beg-tot-row"><span>davon nicht förderfähig</span><b>− ${_eur(c.excluded)}</b></div>`;
+  if(isNWG() && c.base>c.cap) rows+=`<div class="beg-tot-row cap"><span>Förderfähig · max. ${deNum(NWG_EG_M2_CAP,0)} €/m² NGF, max. 10 Mio. €</span><b>${_eur(c.ff)}</b></div>`;
+  if(id==='kfw85eegzw'){ const bg=kfwGzwBegCalc(); rows+=`<div class="beg-tot-row nowrap"><span>Förderung</span><b class="pos">− ${_eur(bg.totalFoe)}</b></div>`; }
+  else rows+=`<div class="beg-tot-row"><span>Förderung · Tilgungszuschuss ${deNum(c.satz, c.satz%1?1:0)} %</span><b class="pos">− ${_eur(c.foe)}</b></div>`;
+  if(!isNWG()) rows+=`<div class="beg-tot-row"><span>Investition je WE</span><b>${c.inv?_eur(Math.round(c.inv/we/100)*100):'—'}</b></div>`;
+  rows+=`<div class="beg-tot-row sum"><span>Eigenanteil</span><b>${_eur(id==='kfw85eegzw' ? (c.inv-kfwGzwBegCalc().totalFoe) : (c.inv-c.foe))}</b></div>`;
+  return rows;
+}
+window.editKfw=(id,k,v)=>{
+  S.prog[id][k]=v; recalcKfw(id); save();
+  if(id==='kfw85eegzw' && k==='we'){ S.prog.gzw.we=v; recalcGzw(); const gt=document.getElementById('gzwtot'); if(gt) gt.innerHTML=gzwTotalsHtml(); }
+  renderDoc();
+  const ms=document.getElementById('ms-'+id); if(ms) ms.innerHTML=renderMsEditor(id);
+  refreshKfwCalc(id);
+};
+function renderBegMs(){
+  const pc = !isNWG() ? begPoolCalc() : null;
+  return (S.prog.beg.massnahmen||[]).map((m,i)=>{
+    const c = begMeasureCalc(m, pc);
+    const topf = c.topf;
+    const fixedSatz = !isNWG() && (topf==='pool15'||topf==='em50');
+    const showHeiz = topf==='heiztausch' || (topf==='frei' && m.custom);
+    const capped = showHeiz && m.heiz && _num(m.invest)>heizCapCurrent();
+    const nameField = m.custom
+      ? `<input type="text" class="beg-name" value="${esc(m.m)}" placeholder="Maßnahme (Freitext, z. B. Smart Home)" oninput="editBeg(${i},'m',this.value)">`
+      : `<select class="beg-name" onchange="editBeg(${i},'m',this.value)">${MASSNAHMEN.map(x=>`<option ${m.m===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`;
+    const satzField = c.noFoe
+      ? `<span class="beg-calc" style="font-size:11px">nicht förderfähig</span>`
+      : fixedSatz
+      ? `<span class="beg-calc" style="font-size:11px">${topf==='em50'?'50 % fix':'Ø '+deNum(c.satz,1)+' %'}</span>`
+      : `<input type="text" inputmode="decimal" value="${esc(m.satz||'')}" placeholder="0" oninput="editBeg(${i},'satz',this.value)">`;
+    return `<div class="beg-ms">
+      <div class="beg-ms-top">
+        ${nameField}
+        <select class="beg-badge" onchange="editBeg(${i},'b',this.value)"><option value="req" ${m.b!=='opt'?'selected':''}>Voraussetzung</option><option value="opt" ${m.b==='opt'?'selected':''}>Optional</option></select>
+        <button class="mini-del" onclick="begDel(${i})">×</button>
+      </div>
+      <div class="beg-ms-grid">
+        <label>Investition €<input type="text" inputmode="decimal" value="${esc(m.invest||'')}" placeholder="0" oninput="editBeg(${i},'invest',this.value)"></label>
+        <label>Fördersatz %${satzField}</label>
+        <label>Förderung<span class="beg-calc" id="begf-${i}">${c.noFoe?'—':_eur(c.foe)}</span></label>
+      </div>
+      ${c.noFoe?`<div class="beg-pool-note">${/photovoltaik/i.test(m.m||'')?'Photovoltaik ist weder über BEG noch über KfW förderfähig — der Betrag zählt zur Investition, nicht zur Förderung.':'Innenbeleuchtung ist bei Nichtwohngebäuden nicht mehr förderfähig.'}</div>`:''}
+      ${topf==='pool15'?`<div class="beg-pool-note">Gemeinsamer 15%-Fördertopf Gebäudehülle/Anlagentechnik — Kostenrahmen wird über alle Maßnahmen dieses Topfs gemeinsam ermittelt (inkl. iSFP-Bonus).</div>`:''}
+      ${topf==='em50'?`<div class="beg-pool-note">Heizungsoptimierung zur Emissionsminderung — feste Förderung von 50 %, außerhalb des Hülle-Topfs.</div>`:''}
+      ${showHeiz?`<label class="beg-heiz"><input type="checkbox" ${m.heiz?'checked':''} onchange="editBeg(${i},'heiz',this.checked)"> Heizung/Wärme — Förderobergrenze anwenden${capped?` <span class="beg-heiz-note">(max. förderfähig ${_eur(heizCapCurrent())})</span>`:''}</label>`:''}
+      <input type="text" class="beg-note" value="${esc(m.note||'')}" placeholder="Notiz (optional)" oninput="editBeg(${i},'note',this.value)">
+    </div>`;
+  }).join('');
+}
+function begBlockHtml(p){
+  const d = S.prog.beg;
+  return `<div class="prog-block">
+    <div class="pbh">${esc(p.name)} <span class="rec-lab">auto berechnet</span></div>
+    <label class="rec-check"><input type="checkbox" ${S.progRec===p.id?'checked':''} onchange="setRec('beg',this.checked)"> Als Empfehlung markieren</label>
+    <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editProg('beg','lead',this.value)">${esc(d.lead)}</textarea></div>
+    <div class="row2">
+      <div class="fld"><label>Klasse</label><select onchange="editProg('beg','klasse',this.value)">${['—',...EEK].map(c=>`<option ${d.klasse===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="fld"><label>Klasse-Zusatz</label><input value="${esc(d.klasseKwh)}" oninput="editProg('beg','klasseKwh',this.value)"></div>
+    </div>
+    ${isNWG()?`<div class="fld"><label>Bewertung (Farbe)</label><div class="farb-sw">${NWG_FARBEN.map(c=>`<span class="${c===d.farbe?'sel':''}" style="background:${c}" onclick="setProgFarbe('beg','${c}')"></span>`).join('')}</div></div>`:''}
+    <div class="row3">
+      <div class="fld"><label>Primär kWh/m²a</label><input value="${esc(d.pe||'')}" oninput="editProg('beg','pe',this.value)"></div>
+      <div class="fld"><label>End kWh/m²a</label><input value="${esc(d.ee||'')}" oninput="editProg('beg','ee',this.value)"></div>
+      <div class="fld"><label>CO₂ kg/m²a</label><input value="${esc(d.co2||'')}" oninput="editProg('beg','co2',this.value)"></div>
+    </div>
+    <div class="row2">
+      <div class="fld"><label>CO₂-Red.</label><input value="${esc(d.co2Red)}" oninput="editProg('beg','co2Red',this.value)"></div>
+      <div class="fld"><label>CO₂-Rest</label><input value="${esc(d.co2Rest)}" oninput="editProg('beg','co2Rest',this.value)"></div>
+    </div>
+    <label class="beg-lbl">Maßnahmen — einzeln bepreist</label>
+    <div id="ms-beg">${renderBegMs()}</div>
+    <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+      <button class="mini-add" onclick="begAdd(false)">+ Katalog-Maßnahme</button>
+      <button class="mini-add" onclick="begAdd(true)">+ Freitext (Smart Home …)</button>
+    </div>
+    <div class="beg-totals" id="begTotals">${begTotalsHtml()}</div>
+  </div>`;
+}
+function refreshBeg(){
+  const c=document.getElementById('ms-beg'); if(c) c.innerHTML=renderBegMs();
+  const t=document.getElementById('begTotals'); if(t) t.innerHTML=begTotalsHtml();
+}
+window.editBeg=(i,k,v)=>{
+  S.prog.beg.massnahmen[i][k]=v;
+  if(k==='m'){ const m=S.prog.beg.massnahmen[i]; if(!m.custom && begTopfFor(v)==='heiztausch'){ m.satz='30'; m.heiz=true; } }
+  recalcBeg(); save(); renderDoc();
+  const mm = S.prog.beg.massnahmen[i];
+  // Reine Texteingaben: kein Neu-Rendern, damit das Feld den Fokus behält
+  if(k==='note' || (k==='m' && mm && mm.custom)){
+    const t=document.getElementById('begTotals'); if(t) t.innerHTML=begTotalsHtml();
+    return;
+  }
+  if(k==='invest'||k==='satz'){
+    // leichtes Update: nur berechnete Werte, Eingabefeld behält Fokus
+    const pc = !isNWG() ? begPoolCalc() : null;
+    S.prog.beg.massnahmen.forEach((m,idx)=>{
+      const c=begMeasureCalc(m,pc);
+      const el=document.getElementById('begf-'+idx); if(el) el.textContent=_eur(c.foe);
+    });
+    const t=document.getElementById('begTotals'); if(t) t.innerHTML=begTotalsHtml();
+    return;
+  }
+  refreshBeg();
+};
+window.begDel=(i)=>{ S.prog.beg.massnahmen.splice(i,1); recalcBeg(); save(); refreshBeg(); renderDoc(); };
+window.begAdd=(custom)=>{ const s=isNWG()?'15':'20'; S.prog.beg.massnahmen.push(custom?{m:'',b:'req',note:'',invest:'',satz:s,custom:true}:{m:MASSNAHMEN[0],b:'req',note:'',invest:'',satz:s}); recalcBeg(); save(); refreshBeg(); renderDoc(); };
+
+function renderMsEditor(pid){
+  const satz=_num(S.prog[pid].satz);
+  return (S.prog[pid].massnahmen||[]).map((m,i)=>{
+    const nameField = m.custom
+      ? `<input type="text" value="${esc(m.m)}" placeholder="Maßnahme (Freitext)" oninput="editMs('${pid}',${i},'m',this.value)" style="flex:1;min-width:0;font-family:var(--font-sans)">`
+      : `<select oninput="editMs('${pid}',${i},'m',this.value)" onchange="editMs('${pid}',${i},'m',this.value)">${MASSNAHMEN.map(x=>`<option ${m.m===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`;
+    const fix=nichtFoerderfaehig(m), off=m.noFoe||fix;
+    const foe=off?0:_num(m.invest)*satz/100;
+    return `<div class="ms-edit">
+      ${nameField}
+      <select class="badge-sel" onchange="editMs('${pid}',${i},'b',this.value)"><option value="req" ${m.b!=='opt'?'selected':''}>Voraussetzung</option><option value="opt" ${m.b==='opt'?'selected':''}>Optional</option></select>
+      <button class="mini-del" onclick="delMs('${pid}',${i})">×</button>
+    </div>
+    <div class="beg-ms-grid">
+      <label>Investition €<input type="text" inputmode="decimal" value="${esc(m.invest||'')}" placeholder="0" oninput="editMs('${pid}',${i},'invest',this.value)"></label>
+      <label>Zuschuss ${deNum(satz, satz%1?1:0)} %<span class="beg-calc" id="msf-${pid}-${i}">${off?'nicht gefördert':_eur(foe)}</span></label>
+    </div>
+    ${fix?`<div class="beg-pool-note">Photovoltaik ist weder über BEG noch über KfW förderfähig — der Betrag zählt zur Investition, nicht zur Fördergrundlage.</div>`
+      :`<label class="beg-heiz"><input type="checkbox" ${m.noFoe?'checked':''} onchange="editMs('${pid}',${i},'noFoe',this.checked)"> Nicht gefördert — vom Tilgungszuschuss ausnehmen</label>`}
+    <div class="ms-edit"><input type="text" value="${esc(m.note||'')}" placeholder="Notiz (U-Wert etc.)" oninput="editMs('${pid}',${i},'note',this.value)" style="font-size:11px"></div>`;
+  }).join('');
+}
+function renderKaskEditor(pid){
+  return (S.prog[pid].kask||[]).map((k,i)=>`
+    <div class="ms-edit">
+      <input type="text" value="${esc(k.l)}" placeholder="Bezeichnung" oninput="editKask('${pid}',${i},'l',this.value)">
+      <input type="text" value="${esc(k.v)}" placeholder="Wert" oninput="editKask('${pid}',${i},'v',this.value)" style="flex:0 0 90px">
+      <label style="font-size:9px;display:flex;align-items:center;gap:3px;flex-shrink:0"><input type="checkbox" style="width:auto" ${k.pos?'checked':''} onchange="editKask('${pid}',${i},'pos',this.checked)">grün</label>
+      <button class="mini-del" onclick="delKask('${pid}',${i})">×</button>
+    </div>`).join('');
+}
+window.setRec=(id,on)=>{ S.progRec = on?id:(S.progAktiv.find(x=>x!==id)||''); save(); renderProgBlocks(); renderDoc(); };
+window.editProg=(id,k,v)=>{ S.prog[id][k]=v; save(); renderDoc(); };
+window.editMs=(id,i,k,v)=>{ S.prog[id].massnahmen[i][k]=v; recalcKfw(id); save(); if(k==='noFoe'){ document.getElementById('ms-'+id).innerHTML=renderMsEditor(id); } refreshKfwCalc(id); renderDoc(); };
+window.delMs=(id,i)=>{ S.prog[id].massnahmen.splice(i,1); recalcKfw(id); save(); document.getElementById('ms-'+id).innerHTML=renderMsEditor(id); refreshKfwCalc(id); renderDoc(); };
+window.addMs=(id,custom)=>{ S.prog[id].massnahmen.push(custom?{m:'',b:'req',note:'',invest:'',custom:true}:{m:MASSNAHMEN[0],b:'req',note:'',invest:''}); recalcKfw(id); save(); document.getElementById('ms-'+id).innerHTML=renderMsEditor(id); refreshKfwCalc(id); renderDoc(); };
+function refreshKfwCalc(id){
+  const d=S.prog[id]; const satz=_num(d.satz);
+  (d.massnahmen||[]).forEach((m,i)=>{ const el=document.getElementById(`msf-${id}-${i}`); if(el) el.textContent=(m.noFoe||nichtFoerderfaehig(m))?'nicht gefördert':_eur(_num(m.invest)*satz/100); });
+  const iv=document.getElementById('kfwinv-'+id); if(iv) iv.value=d.invest;
+  const t=document.getElementById('kfwtot-'+id); if(t) t.innerHTML=kfwTotalsHtml(id);
+}
+window.editKask=(id,i,k,v)=>{ S.prog[id].kask[i][k]=v; save(); renderDoc(); };
+window.delKask=(id,i)=>{ S.prog[id].kask.splice(i,1); save(); document.getElementById('ka-'+id).innerHTML=renderKaskEditor(id); renderDoc(); };
+window.addKask=(id)=>{ S.prog[id].kask.push({l:'Neue Zeile',v:'',pos:false}); save(); document.getElementById('ka-'+id).innerHTML=renderKaskEditor(id); renderDoc(); };
+
+/* Bild-Upload (generisch, für Deckblatt, Unterschrift, Stempel) */
+function setupDrop(dzId, fiId, key){
+  const dz = document.getElementById(dzId), fi = document.getElementById(fiId);
+  if(!dz || !fi) return;
+  const ph = dz.dataset.ph || 'Bild hierher ziehen oder klicken';
+  function paint(){ const v=getPath(S,key); dz.className='drop-zone'+(v?' has-img':''); dz.innerHTML = v?`<img src="${v}">`:ph; }
+  function load(file){
+    if(!file) return;
+    const r = new FileReader();
+    r.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const maxDim = 1600;
+        let w=img.width, h=img.height;
+        if(w>maxDim || h>maxDim){ const sc=maxDim/Math.max(w,h); w=Math.round(w*sc); h=Math.round(h*sc); }
+        const canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        setPath(S,key,dataUrl); save(); paint(); renderDoc();
+      };
+      img.onerror = ()=>{ setPath(S,key,e.target.result); save(); paint(); renderDoc(); };
+      img.src = e.target.result;
+    };
+    r.readAsDataURL(file);
+  }
+  dz.addEventListener('click',()=>fi.click());
+  fi.addEventListener('change',e=>load(e.target.files[0]));
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');load(e.dataTransfer.files[0]);});
+  paint();
+}
+function setupImage(){ setupDrop('dropZone','fileInput','obj.bild'); }
+
+/* Init */
+buildEekSelects();
+bindFields();
+if(S.obj.auto===undefined) S.obj.auto=false;
+document.getElementById('autoAz').addEventListener('change',e=>{ S.obj.auto=e.target.checked; if(S.obj.auto) applyAuto(); setAutoUI(); save(); renderDoc(); });
+setAutoUI();
+(function(){ const el=document.getElementById('appStand'); if(el) el.textContent=`${APP_KANAL} · Stand ${APP_VERSION}`; })();
+renderBlUI();
+applyTypUI();
+renderAmpelEditors();
+refreshProjSelect();
+renderProgToggles();
+renderProgBlocks();
+setupImage();
+renderDoc();
+</script>
+</body>
+</html>
