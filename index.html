@@ -1014,6 +1014,133 @@ function renderBlUI(){
 }
 window.setBundesland=(v)=>{ S.obj.bundesland=v; save(); renderBlUI(); renderProgToggles(); renderProgBlocks(); renderDoc(); };
 function istBerlin(){ return bundesland()==='Berlin'; }
+function istMuenchen(){
+  const n=parseInt(plzNorm(S.obj.plz),10);
+  return (n>=80331 && n<=81929) || /m[üu]nchen/i.test(S.obj.ort||'');
+}
+const PROGRAMME_KOMMUNAL_MUENCHEN = [
+  {id:'fkgem', name:'FKG Effizienzmaßnahmen', typ:'Zuschuss · Stadt München'},
+  {id:'fkgeh', name:'FKG Effizienzhaus im Bestand', typ:'Zuschuss · Stadt München'}
+];
+const FKG_LINK={ fkgem:'https://stadt.muenchen.de/service/info/sachgebiet-forderprogramm-klimaneutrale-gebaude/10414149/', fkgeh:'https://stadt.muenchen.de/service/info/sachgebiet-forderprogramm-klimaneutrale-gebaude/10487499/' };
+function fkgCalc(id){
+  const d=S.prog[id]||{};
+  const grund=_num(d.grund);
+  const auto=fkgAuto();
+  const wf = d.wfManuell!=null ? !!d.wfManuell : auto.wf;
+  const mfh = d.mfhManuell!=null ? !!d.mfhManuell : auto.mfh;
+  const bWf = wf?_num(d.bonusWf):0, bMfh = mfh?_num(d.bonusMfh):0, bGeb = d.gebiet?_num(d.bonusGebiet):0;
+  const satz = Math.min(_num(d.satzMax)||100, grund+bWf+bMfh+bGeb);
+  const basis = _num(d.investManuell) || fkgBegBasis();
+  const zuschuss = basis*satz/100;
+  const isfpFehlt = id==='fkgem' && wf && !d.isfp;
+  return {grund, wf, mfh, gebiet:!!d.gebiet, bWf, bMfh, bGeb, satz, basis, zuschuss, isfpFehlt, autoWf:auto.wf, autoMfh:auto.mfh};
+}
+function fkgAuto(){ return { wf: isWPB(), mfh: (_num(S.obj.we)||1) >= 3 }; }
+function fkgBegBasis(){
+  const d=S.prog.beg; if(!d||!Array.isArray(d.massnahmen)) return 0;
+  return d.massnahmen.reduce((a,m)=>a+_num(m.invest),0);
+}
+function recalcFkg(id){
+  const d=S.prog[id]; if(!d) return;
+  const c=fkgCalc(id);
+  d.invest=_eur(c.basis);
+  d.foerderung=_eur(c.zuschuss);
+  d.foerderNote=`${deNum(c.satz,0)} % Zuschuss`;
+  d.netto=_eur(c.basis-c.zuschuss);
+  d.kask=[{l:'Förderfähige Kosten', v:_eur(c.basis)}, {l:`Zuschuss ${deNum(c.satz,0)} %`, v:'− '+_eur(c.zuschuss), pos:true}];
+}
+function fkgSatzRows(id){
+  const c=fkgCalc(id), d=S.prog[id];
+  let r=`<div class="beg-tot-row nowrap"><span>Grundförderung</span><b>${deNum(c.grund,0)} %</b></div>`;
+  if(c.wf) r+=`<div class="beg-tot-row nowrap"><span>Worst-First${c.autoWf&&d.wfManuell==null?' · automatisch':''}</span><b class="pos">+ ${deNum(c.bWf,0)} %</b></div>`;
+  if(c.mfh) r+=`<div class="beg-tot-row nowrap"><span>Mehrfamilienhaus${c.autoMfh&&d.mfhManuell==null?' · automatisch':''}</span><b class="pos">+ ${deNum(c.bMfh,0)} %</b></div>`;
+  if(c.gebiet) r+=`<div class="beg-tot-row nowrap"><span>Gebiets-Zuschlag</span><b class="pos">+ ${deNum(c.bGeb,0)} %</b></div>`;
+  r+=`<div class="beg-tot-row nowrap"><span>Fördersatz gesamt</span><b>${deNum(c.satz,0)} %</b></div>`;
+  r+=`<div class="beg-tot-row nowrap"><span>Förderfähige Kosten</span><b>${c.basis?_eur(c.basis):'—'}</b></div>`;
+  r+=`<div class="beg-tot-row sum"><span>Zuschuss</span><b>${_eur(c.zuschuss)}</b></div>`;
+  if(c.isfpFehlt) r+=`<div class="beg-cap-note">Der Worst-First-Zuschlag setzt einen <b>individuellen Sanierungsfahrplan mit Ziel EH 55</b> voraus. Bitte oben bestätigen oder den Zuschlag abwählen.</div>`;
+  if(_num(d.satzMax) && c.grund+c.bWf+c.bMfh+c.bGeb > _num(d.satzMax)) r+=`<div class="beg-cap-note">Die Summe der Zuschläge übersteigt den Höchstsatz von <b>${deNum(_num(d.satzMax),0)} %</b> und wurde entsprechend begrenzt.</div>`;
+  return r;
+}
+window.editFkg=(id,k,v)=>{
+  S.prog[id][k]=v; recalcFkg(id); save(); renderDoc();
+  if(k==='lead') return;
+  const t=document.getElementById('fkgtot-'+id); if(t) t.innerHTML=fkgSatzRows(id);
+};
+window.toggleFkg=(id,k,on)=>{ S.prog[id][k]=on; recalcFkg(id); save(); renderProgBlocks(); renderDoc(); };
+function fkgBlockHtml(p){
+  const d=S.prog[p.id], c=fkgCalc(p.id);
+  return `<div class="prog-block">
+    <div class="pbh">${esc(p.name)} <span class="rec-lab">München</span></div>
+    <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editFkg('${p.id}','lead',this.value)">${esc(d.lead||'')}</textarea></div>
+    <div class="fld"><label>Förderfähige Kosten € <span class="rec-lab">leer = Summe BEG-Maßnahmen (${_eur(fkgBegBasis())})</span></label><input value="${esc(d.investManuell||'')}" placeholder="${deNum(fkgBegBasis(),0)}" oninput="editFkg('${p.id}','investManuell',this.value)"></div>
+    <div class="row3">
+      <div class="fld"><label>Grundförderung %</label><input value="${esc(d.grund||'')}" oninput="editFkg('${p.id}','grund',this.value)"></div>
+      <div class="fld"><label>Höchstsatz %</label><input value="${esc(d.satzMax||'')}" oninput="editFkg('${p.id}','satzMax',this.value)"></div>
+      <div class="fld"><label>Satz gesamt</label><span class="beg-calc" style="font-size:13px">${deNum(c.satz,0)} %</span></div>
+    </div>
+    <label class="beg-heiz"><input type="checkbox" ${c.wf?'checked':''} onchange="toggleFkg('${p.id}','wfManuell',this.checked)"> Worst-First-Zuschlag (+${esc(d.bonusWf)} %)${d.wfManuell==null?` <span class="beg-heiz-note">automatisch: ${c.autoWf?'ja':'nein'}</span>`:''}</label>
+    ${p.id==='fkgem'?`<label class="beg-heiz"><input type="checkbox" ${d.isfp?'checked':''} onchange="toggleFkg('${p.id}','isfp',this.checked)"> iSFP mit Ziel EH 55 liegt vor${c.isfpFehlt?` <span class="beg-heiz-note">für Worst-First erforderlich</span>`:''}</label>`:''}
+    <label class="beg-heiz"><input type="checkbox" ${c.mfh?'checked':''} onchange="toggleFkg('${p.id}','mfhManuell',this.checked)"> Mehrfamilienhaus-Zuschlag (+${esc(d.bonusMfh)} %)${d.mfhManuell==null?` <span class="beg-heiz-note">automatisch: ${c.autoMfh?'ja':'nein'}</span>`:''}</label>
+    <label class="beg-heiz"><input type="checkbox" ${d.gebiet?'checked':''} onchange="toggleFkg('${p.id}','gebiet',this.checked)"> Gebiets-Zuschlag (+${esc(d.bonusGebiet)} %) — Sanierungs- oder Fördergebiet</label>
+    <div class="beg-totals" id="fkgtot-${p.id}">${fkgSatzRows(p.id)}</div>
+  </div>`;
+}
+function fkgMailto(p){
+  const adr=[S.obj.adresse,S.obj.plzort].filter(Boolean).join(', ');
+  const subj=`Anfrage: ${p.name} (Stadt München)`;
+  const body=`Sehr geehrtes DGX-Team,\n\nfür das Objekt ${adr} möchte ich mich zum Münchner Förderprogramm klimaneutrale Gebäude („${p.name}“) beraten lassen und Unterstützung bei Vorbereitung und Antragstellung erhalten.\n\nBitte setzen Sie sich mit mir in Verbindung.\n\nMit freundlichen Grüßen`;
+  return `mailto:info@dgx.eco?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+function fkgDetailHtml(p,d,i,total){
+  const c=fkgCalc(p.id), em=p.id==='fkgem';
+  return `<div class="page">
+    <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)} · Kommunale Förderung</div><h2>${esc(p.name)}.</h2></div>
+      <div class="obj"><b>${esc(p.typ)}</b><br>Referat für Klima- und Umweltschutz<br>${esc(S.obj.plzort)}</div></div>
+    <div class="rule"></div>
+    <div class="d-lead">${esc(d.lead||'')}</div>
+    <div class="sec-h">Kurzübersicht Bedingungen</div>
+    <div class="gzw-facts">
+      <div class="gzw-fact"><div class="fl">Förderart</div><div class="fv">Nicht rückzahlbarer Zuschuss der Stadt München</div></div>
+      <div class="gzw-fact"><div class="fl">Grundförderung</div><div class="fv">${deNum(c.grund,0)} % der förderfähigen Kosten</div></div>
+      <div class="gzw-fact"><div class="fl">Worst-First-Zuschlag</div><div class="fv">+ ${esc(d.bonusWf)} % für energetisch schlechteste Gebäude${em?' — setzt einen iSFP mit Ziel EH 55 voraus':''}</div></div>
+      <div class="gzw-fact"><div class="fl">Mehrfamilienhaus</div><div class="fv">+ ${esc(d.bonusMfh)} % ab drei Wohneinheiten</div></div>
+      <div class="gzw-fact"><div class="fl">Gebiets-Zuschlag</div><div class="fv">+ ${esc(d.bonusGebiet)} % in ausgewiesenen Sanierungs- und Fördergebieten</div></div>
+      <div class="gzw-fact"><div class="fl">Höchstsatz</div><div class="fv">bis zu ${esc(d.satzMax)} % der förderfähigen Kosten</div></div>
+      <div class="gzw-fact"><div class="fl">Antragsberechtigt</div><div class="fv">Alle Eigentümertypen einschließlich Vermietender und Unternehmen; Objekt im Stadtgebiet München</div></div>
+      <div class="gzw-fact"><div class="fl">${em?'Ziel':'Voraussetzung'}</div><div class="fv">${em?'Energetische Einzelmaßnahmen an Gebäudehülle und Anlagentechnik':'Sanierung auf Effizienzhaus-Niveau im Bestand — ein iSFP ist nicht erforderlich'}</div></div>
+    </div>
+    <div class="d-grid">
+      <div>
+        <div class="sec-h">Fördersatz im Detail</div>
+        <div class="ms"><div class="ms-n">1</div><div><div class="ms-name">Grundförderung</div><div class="ms-note price">${deNum(c.grund,0)} %</div></div></div>
+        ${c.wf?`<div class="ms"><div class="ms-n">2</div><div><div class="ms-name">Worst-First-Zuschlag</div><div class="ms-note price">+ ${deNum(c.bWf,0)} %</div></div></div>`:''}
+        ${c.mfh?`<div class="ms"><div class="ms-n">${c.wf?3:2}</div><div><div class="ms-name">Mehrfamilienhaus</div><div class="ms-note price">+ ${deNum(c.bMfh,0)} %</div></div></div>`:''}
+        ${c.gebiet?`<div class="ms"><div class="ms-n">${2+(c.wf?1:0)+(c.mfh?1:0)}</div><div><div class="ms-name">Gebiets-Zuschlag</div><div class="ms-note price">+ ${deNum(c.bGeb,0)} %</div></div></div>`:''}
+        <div class="ms"><div class="ms-n">Σ</div><div><div class="ms-name">Fördersatz gesamt</div><div class="ms-note price">${deNum(c.satz,0)} % der förderfähigen Kosten</div></div></div>
+      </div>
+      <div>
+        <div class="sec-h">Förderrechnung</div>
+        <div class="kask">
+          ${(d.kask||[]).map(k=>`<div class="kask-row"><span class="kl">${esc(k.l)}</span><span class="kv${k.pos?' pos':''}">${esc(k.v)}</span></div>`).join('')}
+          <div class="kask-row sum"><span class="kl">Eigenanteil</span><span class="kv">${_eur(c.basis-c.zuschuss)}</span></div>
+        </div>
+        ${em?`<div class="doc-cap-note"><b>Hinweis:</b> Die förderfähigen Kosten entsprechen den bei BEG Einzelmaßnahmen erfassten Maßnahmen. Maßgeblich für die Bewilligung sind die Vorgaben der Förderrichtlinie der Stadt München.</div>`:''}
+      </div>
+    </div>
+    ${kumulierungHinweis()}
+    <div class="isfp">
+      <div class="isfp-txt">
+        <div class="isfp-h">Wir begleiten Sie gerne bei der Antragstellung</div>
+        <p>Von der Prüfung der Zuschlagsvoraussetzungen${em?' und der Erstellung des erforderlichen Sanierungsfahrplans':''} über die Nachweisunterlagen bis zur Antragstellung beim Referat für Klima- und Umweltschutz unterstützen wir Sie.</p>
+      </div>
+      <a class="isfp-btn" href="${fkgMailto(p)}">Angebot anfragen →</a>
+    </div>
+    <div class="note"><a href="${FKG_LINK[p.id]}" target="_blank" rel="noopener">Programmseite &amp; Förderrichtlinie ansehen →</a></div>
+    ${footLine(4+i,total)}
+  </div>`;
+}
 const EEK_SEL = ['A+','A','B','C','D','E','F','G','H'];
 function eekSelect(id, handler){
   const v=S.prog[id].eek||'';
@@ -1023,10 +1150,13 @@ function PK(){
   if(isNBNWG()) return PROGRAMME_KATALOG_NBNWG;
   if(isNB()) return PROGRAMME_KATALOG_NB;
   const base = isNWG() ? PROGRAMME_KATALOG_NWG : PROGRAMME_KATALOG_WG;
-  if(!istBerlin()) return base;
-  // Kommunale Programme: erst Programme mit Berechnung, dann reine Erklärseiten
-  const kom = PROGRAMME_KOMMUNAL_BERLIN.filter(p=>!p.info).concat(PROGRAMME_KOMMUNAL_BERLIN.filter(p=>p.info));
-  return base.concat(kom);
+  let out = base;
+  if(istBerlin()){
+    const kom = PROGRAMME_KOMMUNAL_BERLIN.filter(p=>!p.info).concat(PROGRAMME_KOMMUNAL_BERLIN.filter(p=>p.info));
+    out = out.concat(kom);
+  }
+  if(istMuenchen()) out = out.concat(PROGRAMME_KOMMUNAL_MUENCHEN);
+  return out;
 }
 
 /* ---------- KfW-Programmvarianten generieren ---------- */
@@ -1081,7 +1211,13 @@ const DEFAULT = {
   progRecNBNWG:'nbn40',
   nb:{ heizung:'Luft-Wasser-Wärmepumpe', lueftung:'Zentral mit WRG, 80 %', pv:'geplant, ca. 30 kWp', baukosten:'3.120.000', pe:'22', ee:'30', co2:'3' },
   prog:{
-    nbn55:    mkNbNwg('55'),
+    fkgem:{ grund:'5', bonusWf:'5', bonusMfh:'5', bonusGebiet:'5', satzMax:'20', investManuell:'', isfp:false, gebiet:false, wfManuell:null, mfhManuell:null,
+        invest:'', foerderung:'', netto:'', kask:[], eek:'',
+        lead:'Zuschussprogramm der Stadt München für energetische Einzelmaßnahmen an Gebäudehülle und Anlagentechnik. Auf die Grundförderung von 5 % können Zuschläge für besonders schlechte Gebäude, Mehrfamilienhäuser und ausgewiesene Fördergebiete kommen — zusammen bis zu 20 % der förderfähigen Kosten.' },
+  fkgeh:{ grund:'10', bonusWf:'5', bonusMfh:'5', bonusGebiet:'5', satzMax:'25', investManuell:'', isfp:false, gebiet:false, wfManuell:null, mfhManuell:null,
+        invest:'', foerderung:'', netto:'', kask:[], eek:'',
+        lead:'Zuschussprogramm der Stadt München für die Sanierung von Bestandsgebäuden auf Effizienzhaus-Niveau. Die Grundförderung beträgt 10 %, mit Zuschlägen bis zu 25 % der förderfähigen Kosten. Ein individueller Sanierungsfahrplan ist hier nicht erforderlich.' },
+  nbn55:    mkNbNwg('55'),
     nbn40:    mkNbNwg('40'),
     nbn40qng: mkNbNwg('40qng'),
     nb55:    mkNb('55'),
@@ -1457,6 +1593,11 @@ if((S._v||0) < 28){
 if((S._v||0) < 29){
   ['nbn55','nbn40','nbn40qng'].forEach(id=>{ const d=S.prog[id]; if(d && _num(d.zinsKfw)<2) d.zinsKfw='2,35'; });
   S._v = 29;
+}
+// v30: FKG München — Effizienzmaßnahmen und Effizienzhaus im Bestand
+if((S._v||0) < 30){
+  ['fkgem','fkgeh'].forEach(id=>{ if(!S.prog[id]) S.prog[id]=JSON.parse(JSON.stringify(DEFAULT.prog[id])); });
+  S._v = 30;
 }
 save();
 
@@ -1926,9 +2067,11 @@ function renderDoc(){
   recalcIbb();
   recalcIbbco2();
   recalcIbbjw();
-  for(const id in S.prog){ if(id!=='beg'&&id!=='gzw'&&id!=='ibbsolarl'&&id!=='ibbco2'&&id!=='ibbjunges'&&!isInfoProg(id)){ if(/^nb/.test(id)||/^nbn/.test(id)) recalcNb(id); else recalcKfw(id); } }
+  ['fkgem','fkgeh'].forEach(id=>{ if(S.prog[id]) recalcFkg(id); });
+  for(const id in S.prog){ if(id!=='beg'&&id!=='gzw'&&id!=='ibbsolarl'&&id!=='ibbco2'&&id!=='ibbjunges'&&!/^fkg/.test(id)&&!isInfoProg(id)){ if(/^nb/.test(id)||/^nbn/.test(id)) recalcNb(id); else recalcKfw(id); } }
   const active = PK().filter(p=>S.progAktiv.includes(p.id));
-  const activeCmp = active.filter(p=>p.id!=='gzw'&&p.id!=='ibbsolarl'&&p.id!=='ibbco2'&&p.id!=='ibbjunges'&&!isInfoProg(p.id));
+  const activeCmp = active.filter(p=>p.id!=='gzw'&&p.id!=='ibbsolarl'&&p.id!=='ibbco2'&&p.id!=='ibbjunges'&&!/^fkg/.test(p.id)&&!isInfoProg(p.id));
+  const aktiv = id => active.some(p=>p.id===id);
   const total = 5 + active.length*(isNB()?2:1);
   const fazitN = total - 1;
   let n = 0;
@@ -2007,11 +2150,12 @@ function renderDoc(){
         ${rows.map(r=>`<div class="cmp-r" style="${cols}"><div class="c rl">${r.rl}</div>${activeCmp.map(p=>cmpCell(p,r.f(p))).join('')}</div>`).join('')}
       </div>
     </div>
-    ${S.progAktiv.includes('gzw')?`<div class="gzw-banner"><span class="gzw-banner-tag">+ Zusatzförderung</span> Zusätzlich möglich: <b>Gewerbe zu Wohnen (KfW 266)</b> — 30 % Zuschuss auf die Umbaukosten je neu entstehender Wohneinheit, bis 100.000 €/WE (max. 300.000 € gesamt). Details siehe eigene Programmseite.</div>`:''}
-    ${S.progAktiv.includes('ibbsolarl')?(()=>{ const c=ibbCalc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB SolarPLUS L</b> — Zuschuss des Landes Berlin für Photovoltaik, Speicher und Messinfrastruktur (${c.g.a} % / ${c.g.b} % je Modul, modulbezogene Höchstbeträge)${c.foe>0?`. Für die geplanten Module: <b>${_eur(c.foe)} Zuschuss</b>`:''}. Details siehe eigene Programmseite.</div>`; })():''}
-    ${S.progAktiv.includes('ibbco2')?(()=>{ const c=ibbco2Calc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB CO2-Sparende Gebäude</b> — zinsloses Darlehen nach erreichter CO₂-Einsparung (${IBBCO2_SATZ} € je kg CO₂e und m²)${c.basis>0?`, hier rund <b>${_eur(c.basis)}</b>${c.bonus>0?` inkl. ${_eur(c.bonus)} Zuschuss`:''}`:''}. Details siehe eigene Programmseite.</div>`; })():''}
-    ${S.progAktiv.includes('ibbjunges')?(()=>{ const c=ibbjwCalc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB Junges Wohnen</b> — zinsloses Baudarlehen und Baukostenzuschuss für Wohnplätze für Studierende und Auszubildende (ab ${IBBJW_MIN_PLAETZE} Plätzen)${c.gesamt>0?`, hier rund <b>${_eur(c.gesamt)}</b> Gesamtförderung`:''}. Details siehe eigene Programmseite.</div>`; })():''}
+    ${aktiv('gzw')?`<div class="gzw-banner"><span class="gzw-banner-tag">+ Zusatzförderung</span> Zusätzlich möglich: <b>Gewerbe zu Wohnen (KfW 266)</b> — 30 % Zuschuss auf die Umbaukosten je neu entstehender Wohneinheit, bis 100.000 €/WE (max. 300.000 € gesamt). Details siehe eigene Programmseite.</div>`:''}
+    ${aktiv('ibbsolarl')?(()=>{ const c=ibbCalc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB SolarPLUS L</b> — Zuschuss des Landes Berlin für Photovoltaik, Speicher und Messinfrastruktur (${c.g.a} % / ${c.g.b} % je Modul, modulbezogene Höchstbeträge)${c.foe>0?`. Für die geplanten Module: <b>${_eur(c.foe)} Zuschuss</b>`:''}. Details siehe eigene Programmseite.</div>`; })():''}
+    ${aktiv('ibbco2')?(()=>{ const c=ibbco2Calc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB CO2-Sparende Gebäude</b> — zinsloses Darlehen nach erreichter CO₂-Einsparung (${IBBCO2_SATZ} € je kg CO₂e und m²)${c.basis>0?`, hier rund <b>${_eur(c.basis)}</b>${c.bonus>0?` inkl. ${_eur(c.bonus)} Zuschuss`:''}`:''}. Details siehe eigene Programmseite.</div>`; })():''}
+    ${aktiv('ibbjunges')?(()=>{ const c=ibbjwCalc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB Junges Wohnen</b> — zinsloses Baudarlehen und Baukostenzuschuss für Wohnplätze für Studierende und Auszubildende (ab ${IBBJW_MIN_PLAETZE} Plätzen)${c.gesamt>0?`, hier rund <b>${_eur(c.gesamt)}</b> Gesamtförderung`:''}. Details siehe eigene Programmseite.</div>`; })():''}
     ${(()=>{ const infos=active.filter(p=>isInfoProg(p.id)); return infos.length?`<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Ergänzend geprüft: <b>${infos.map(p=>esc(p.name)).join('</b>, <b>')}</b> — diese Berliner Programme sind je nach Vorhaben zusätzlich nutzbar. Erläuterung auf den folgenden Seiten.</div>`:''; })()}
+    ${(()=>{ const fkg=active.filter(p=>/^fkg/.test(p.id)); if(!fkg.length) return ''; const teile=fkg.map(p=>{ const c=fkgCalc(p.id); return `<b>${esc(p.name)}</b> (${deNum(c.satz,0)} %${c.zuschuss>0?` ≈ ${_eur(c.zuschuss)}`:''})`; }).join(' · '); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · München</span> Zusätzlich möglich über das Förderprogramm klimaneutrale Gebäude der Stadt München: ${teile}. Details siehe eigene Programmseiten.</div>`; })()}
     <div class="note">Alle Angaben indikativ · Stand 2026</div>
     ${footLine(3,total)}
   </div>`;
@@ -2023,6 +2167,7 @@ function renderDoc(){
     if(p.id==='ibbsolarl'){ html += ibbDetailHtml(p,d,i,total); return; }
     if(p.id==='ibbco2'){ html += ibbco2DetailHtml(p,d,i,total); return; }
     if(p.id==='ibbjunges'){ html += ibbjwDetailHtml(p,d,i,total); return; }
+    if(/^fkg/.test(p.id)){ html += fkgDetailHtml(p,d,i,total); return; }
     if(isNB()){ html += nbDetailHtml(p,d,i,total); return; }    if(isInfoProg(p.id)){ html += infoDetailHtml(p,d,i,total); return; }
     const isRec = p.id===S.progRec;
     const kaskSum = d.netto;
@@ -2372,6 +2517,7 @@ function renderProgToggles(){
     if(calc.length) html += `<div class="prog-cat">Kommunale Förderung · Berlin</div>` + calc.map(tog).join('');
     if(info.length) html += `<div class="prog-cat">Kommunal · Berlin — nur Erklärseite</div>` + info.map(tog).join('');
   }
+  if(istMuenchen() && !isNB()) html += `<div class="prog-cat">Kommunale Förderung · München</div>` + PROGRAMME_KOMMUNAL_MUENCHEN.map(tog).join('');
   document.getElementById('progToggles').innerHTML = html;
 }
 window.toggleProg=(id,on)=>{
@@ -2398,6 +2544,7 @@ function renderProgBlocks(){
     if(p.id==='ibbsolarl') return ibbBlockHtml(p);
     if(p.id==='ibbco2') return ibbco2BlockHtml(p);
     if(p.id==='ibbjunges') return ibbjwBlockHtml(p);
+    if(/^fkg/.test(p.id)) return fkgBlockHtml(p);
     if(isNB()) return nbBlockHtml(p);
     if(isInfoProg(p.id)) return infoBlockHtml(p);
     return `<div class="prog-block">
