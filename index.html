@@ -1032,7 +1032,7 @@ function fkgCalc(id){
   const bWf = wf?_num(d.bonusWf):0, bMfh = mfh?_num(d.bonusMfh):0, bGeb = d.gebiet?_num(d.bonusGebiet):0;
   const satz = Math.min(_num(d.satzMax)||100, grund+bWf+bMfh+bGeb);
   const rawBasis = _num(d.investManuell) || fkgBegBasis();
-  const cap = fkgCapMax();
+  const cap = fkgCapMax(id);
   const basis = Math.min(rawBasis, cap);
   const capped = rawBasis > cap;
   const zuschuss = basis*satz/100;
@@ -1040,7 +1040,7 @@ function fkgCalc(id){
   return {grund, wf, mfh, gebiet:!!d.gebiet, bWf, bMfh, bGeb, satz, basis, rawBasis, cap, capped, zuschuss, isfpFehlt, autoWf:auto.wf, autoMfh:auto.mfh};
 }
 function fkgAuto(){ return { wf: isWPB(), mfh: (_num(S.obj.we)||1) >= 3 }; }
-function fkgCapMax(){ return isNWG() ? Infinity : begKostenrahmenMit(_num(S.obj.we)||1); }
+function fkgCapMax(id){ return isNWG() ? Infinity : (id==='fkgeh' ? 150000*(_num(S.obj.we)||1) : begKostenrahmenMit(_num(S.obj.we)||1)); }
 function fkgBegBasis(){
   const d=S.prog.beg; if(!d||!Array.isArray(d.massnahmen)) return 0;
   const pc = !isNWG() ? begPoolCalc('beg') : null;
@@ -1066,7 +1066,7 @@ function fkgSatzRows(id){
   r+=`<div class="beg-tot-row sum"><span>Zuschuss</span><b>${_eur(c.zuschuss)}</b></div>`;
   if(c.isfpFehlt) r+=`<div class="beg-cap-note">Der Worst-First-Zuschlag setzt einen <b>individuellen Sanierungsfahrplan mit Ziel EH 55</b> voraus. Bitte oben bestätigen oder den Zuschlag abwählen.</div>`;
   if(_num(d.satzMax) && c.grund+c.bWf+c.bMfh+c.bGeb > _num(d.satzMax)) r+=`<div class="beg-cap-note">Die Summe der Zuschläge übersteigt den Höchstsatz von <b>${deNum(_num(d.satzMax),0)} %</b> und wurde entsprechend begrenzt.</div>`;
-  if(c.capped){ const years=Math.ceil(c.rawBasis/c.cap); r+=`<div class="beg-cap-note">Die förderfähigen Kosten sind wie bei BEG auf max. <b>${_eur(c.cap)} pro Jahr und Wohneinheit</b> (mit iSFP) begrenzt. Die eingetragenen ${_eur(c.rawBasis)} übersteigen das — aufgeteilt auf ${years} Jahre wären insgesamt ${_eur(c.rawBasis)} förderfähig.</div>`; }
+  if(c.capped){ const years=Math.ceil(c.rawBasis/c.cap); r+=`<div class="beg-cap-note">Die förderfähigen Kosten sind ${id==='fkgeh'?'auf max. <b>150.000 € pro Wohneinheit</b> begrenzt.':`wie bei BEG auf max. <b>${_eur(c.cap)} pro Jahr und Wohneinheit</b> (mit iSFP) begrenzt. Die eingetragenen ${_eur(c.rawBasis)} übersteigen das — aufgeteilt auf ${years} Jahre wären insgesamt ${_eur(c.rawBasis)} förderfähig.`}</div>`; }
   return r;
 }
 window.editFkg=(id,k,v)=>{
@@ -1134,7 +1134,8 @@ function fkgDetailHtml(p,d,i,total){
           <div class="kask-row sum"><span class="kl">Eigenanteil</span><span class="kv">${_eur(c.basis-c.zuschuss)}</span></div>
         </div>
         ${em?`<div class="doc-cap-note"><b>Hinweis:</b> Die förderfähigen Kosten entsprechen den bei BEG Einzelmaßnahmen erfassten Maßnahmen. Maßgeblich für die Bewilligung sind die Vorgaben der Förderrichtlinie der Stadt München.</div>`:''}
-        ${(()=>{ const si=begSplitInfo('beg'); return si?`<div class="doc-cap-note"><b>Hinweis zum Förderrahmen:</b> Der gemeinsame Fördertopf Gebäudehülle/Anlagentechnik bei BEG ist mit iSFP auf max. ${_eur(si.capMit)} pro Jahr und Wohneinheit begrenzt. Die geplanten Maßnahmen summieren sich auf ${_eur(si.gesamt)} — aktuell in einem Jahr förderfähig: ${_eur(si.foerderfaehig)}. Teilen Sie die Maßnahmen auf ${si.years} Jahre auf, steigen auch die hier förderfähigen Kosten für FKG entsprechend an.</div>`:''; })()}
+        ${em?(()=>{ const si=begSplitInfo('beg'); return si?`<div class="doc-cap-note"><b>Hinweis zum Förderrahmen:</b> Der gemeinsame Fördertopf Gebäudehülle/Anlagentechnik bei BEG ist mit iSFP auf max. ${_eur(si.capMit)} pro Jahr und Wohneinheit begrenzt. Die geplanten Maßnahmen summieren sich auf ${_eur(si.gesamt)} — aktuell in einem Jahr förderfähig: ${_eur(si.foerderfaehig)}. Teilen Sie die Maßnahmen auf ${si.years} Jahre auf, steigen auch die hier förderfähigen Kosten für FKG entsprechend an.</div>`:''; })()
+        :(c.capped?`<div class="doc-cap-note"><b>Hinweis zum Förderrahmen:</b> Die förderfähigen Kosten sind auf max. <b>150.000 € pro Wohneinheit</b> begrenzt (hier: ${_eur(c.cap)}). Die eingetragenen ${_eur(c.rawBasis)} übersteigen das.</div>`:'')}
       </div>
     </div>
     ${kumulierungHinweis()}
