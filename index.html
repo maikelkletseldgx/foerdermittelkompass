@@ -1039,7 +1039,8 @@ function fkgCalc(id){
 function fkgAuto(){ return { wf: isWPB(), mfh: (_num(S.obj.we)||1) >= 3 }; }
 function fkgBegBasis(){
   const d=S.prog.beg; if(!d||!Array.isArray(d.massnahmen)) return 0;
-  return d.massnahmen.reduce((a,m)=>a+_num(m.invest),0);
+  const pc = !isNWG() ? begPoolCalc('beg') : null;
+  return d.massnahmen.reduce((a,m)=>a+begMeasureCalc(m,pc).ff,0);
 }
 function recalcFkg(id){
   const d=S.prog[id]; if(!d) return;
