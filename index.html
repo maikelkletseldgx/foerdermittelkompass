@@ -1141,7 +1141,7 @@ function fkgDetailHtml(p,d,i,total){
     ${footLine(4+i,total)}
   </div>`;
 }
-const EEK_SEL = ['A+','A','B','C','D','E','F','G','H'];
+const EEK_SEL = ['GEG','EH 85','EH 70','EH 55'];
 function eekSelect(id, handler){
   const v=S.prog[id].eek||'';
   return `<select onchange="${handler}">${['—',...EEK_SEL].map(c=>`<option value="${c==='—'?'':c}" ${v===(c==='—'?'':c)?'selected':''}>${c}</option>`).join('')}</select>`;
@@ -1150,7 +1150,12 @@ function PK(){
   if(isNBNWG()) return PROGRAMME_KATALOG_NBNWG;
   if(isNB()) return PROGRAMME_KATALOG_NB;
   const base = isNWG() ? PROGRAMME_KATALOG_NWG : PROGRAMME_KATALOG_WG;
-  let out = base;
+  // BEG-Varianten direkt hinter dem Original einfügen
+  let out = [];
+  base.forEach(p=>{
+    out.push(p);
+    if(p.id==='beg') begVarianten().filter(id=>id!=='beg').forEach(id=>out.push({id, name:begName(id), typ:'Direktzuschuss'}));
+  });
   if(istBerlin()){
     const kom = PROGRAMME_KOMMUNAL_BERLIN.filter(p=>!p.info).concat(PROGRAMME_KOMMUNAL_BERLIN.filter(p=>p.info));
     out = out.concat(kom);
@@ -1599,6 +1604,12 @@ if((S._v||0) < 30){
   ['fkgem','fkgeh'].forEach(id=>{ if(!S.prog[id]) S.prog[id]=JSON.parse(JSON.stringify(DEFAULT.prog[id])); });
   S._v = 30;
 }
+// v31: Variantenvergleich zeigt KfW EH Standard statt Energieeffizienzklasse
+if((S._v||0) < 31){
+  const map={'A+':'EH 55','A':'EH 55','B':'EH 70','C':'EH 85'};
+  for(const id in S.prog){ const d=S.prog[id]; if(!d||typeof d.eek!=='string') continue; d.eek = map[d.eek] || (/^EH /.test(d.eek)?d.eek:''); }
+  S._v = 31;
+}
 save();
 
 function save(){
@@ -1724,7 +1735,7 @@ function nbBlockHtml(p){
     <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="4" oninput="editNb('${p.id}','lead',this.value)">${esc(d.lead||'')}</textarea></div>
     <div class="row2">
       <div class="fld"><label>Erreichter Standard</label><input value="${esc(d.klasse)}" oninput="editNb('${p.id}','klasse',this.value)"></div>
-      <div class="fld"><label>Energieeffizienzklasse</label>${eekSelect(p.id, `editNb('${p.id}','eek',this.value)`)}</div>
+      <div class="fld"><label>KfW EH Standard</label>${eekSelect(p.id, `editNb('${p.id}','eek',this.value)`)}</div>
     </div>
     <div class="row2">
       <div class="fld"><label>Zusatz</label><input value="${esc(d.klasseKwh)}" oninput="editNb('${p.id}','klasseKwh',this.value)"></div>
@@ -2021,7 +2032,7 @@ function gzwDetailHtml(p,d,i,total){
     ${footLine(4+i,total)}
   </div>`;
 }
-function cmpName(p){ return p.id==='beg' ? 'BEG EM' : p.name; }
+function cmpName(p){ if(p.id==='beg') return 'BEG EM'; if(isBeg(p.id)){ const i=begVarianten().indexOf(p.id); return 'BEG EM · '+String.fromCharCode(65+Math.max(0,i)); } return p.name; }
 function deNum(n, dec){ dec=dec||0; return Number(n).toLocaleString('de-DE',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
 function dualCell(perM2, unit){
   const p=_num(perM2), qm=_qm(), tot=p*qm;
@@ -2063,12 +2074,13 @@ function footLine(n,tot){ return `<div class="foot"><span>DGX · Fördermittelko
 /* ---------- Dokument rendern ---------- */
 function renderDoc(){
   recalcBeg();
+  begVarianten().forEach(id=>{ if(id!=='beg') recalcBeg(id); });
   recalcGzw();
   recalcIbb();
   recalcIbbco2();
   recalcIbbjw();
   ['fkgem','fkgeh'].forEach(id=>{ if(S.prog[id]) recalcFkg(id); });
-  for(const id in S.prog){ if(id!=='beg'&&id!=='gzw'&&id!=='ibbsolarl'&&id!=='ibbco2'&&id!=='ibbjunges'&&!/^fkg/.test(id)&&!isInfoProg(id)){ if(/^nb/.test(id)||/^nbn/.test(id)) recalcNb(id); else recalcKfw(id); } }
+  for(const id in S.prog){ if(!isBeg(id)&&id!=='gzw'&&id!=='ibbsolarl'&&id!=='ibbco2'&&id!=='ibbjunges'&&!/^fkg/.test(id)&&!isInfoProg(id)){ if(/^nb/.test(id)||/^nbn/.test(id)) recalcNb(id); else recalcKfw(id); } }
   const active = PK().filter(p=>S.progAktiv.includes(p.id));
   const activeCmp = active.filter(p=>p.id!=='gzw'&&p.id!=='ibbsolarl'&&p.id!=='ibbco2'&&p.id!=='ibbjunges'&&!/^fkg/.test(p.id)&&!isInfoProg(p.id));
   const aktiv = id => active.some(p=>p.id===id);
@@ -2136,7 +2148,7 @@ function renderDoc(){
     {rl:'Investition', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].invest)}</span>${(!isNWG()&&S.prog[p.id].investWE)?`<span class="cs">${esc(S.prog[p.id].investWE)}</span>`:''}`},
     {rl:'Förderung', f:p=>`<span class="fig pos">${esc(S.prog[p.id].foerderung)}</span><span class="cs">${esc(S.prog[p.id].foerderNote)}</span>`},
     {rl:'Eigenanteil', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].netto)}</span>`},
-    {rl:'Energieeffizienzklasse', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].eek||'—')}</span>`}
+    {rl:'KfW EH Standard', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].eek||'—')}</span>`}
   ].filter(r=> !(isNWG() && r.rl==='Erreichte Klasse') && !(!isNWG() && r.rl==='Bewertung') && !(isNB() && r.rl==='Nötige Maßnahmen'));
   html += `<div class="page">
     <div class="ph"><div><div class="kick">02 · Programmvergleich</div><h2>Variantenvergleich</h2></div>${objHead()}</div>
@@ -2172,7 +2184,7 @@ function renderDoc(){
     const isRec = p.id===S.progRec;
     const kaskSum = d.netto;
     html += `<div class="page">
-      <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)}${isRec?' · Empfehlung':''}</div><h2>${esc(p.name)}.</h2></div>
+      <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)}${isRec?' · Empfehlung':''}</div><h2>${esc(isBeg(p.id)?begName(p.id):p.name)}.</h2></div>
         <div class="obj"><b>${esc(p.typ)}</b><br>${esc(p.name)}${(isNWG()&&p.id!=='kfw85eegzw')?`<br>Bewertung <span class="farb-chip" style="background:${d.farbe||'#ccc'}"></span>`:`<br>Ziel Klasse ${esc(d.klasse)}`}</div></div>
       <div class="rule"></div>
       <div class="d-lead">${esc(d.lead)}</div>
@@ -2185,7 +2197,7 @@ function renderDoc(){
       <div class="d-grid">
         <div>
           <div class="sec-h">Nötige Maßnahmen</div>
-          ${(()=>{ const begPc = (p.id==='beg' && !isNWG()) ? begPoolCalc() : null; const gzwPc = p.id==='kfw85eegzw' ? begPoolCalcFor(d.massnahmen,_num(d.we)||1) : null; return (d.massnahmen||[]).map((m,idx)=>{ let priceHtml=''; if(p.id==='beg'){ const c=begMeasureCalc(m,begPc); if(c.invest){ if(c.noFoe){ priceHtml=`<div class="ms-note price">${_eur(c.invest)} · <span class="ms-cap">nicht förderfähig</span></div>`; } else { const ffNote = Math.abs(c.ff-c.invest)>1 ? ` · förderfähig ${_eur(c.ff)}` : ''; priceHtml=`<div class="ms-note price">${_eur(c.invest)}${ffNote} · ${deNum(c.satz,c.satz%1?1:0)} % = ${_eur(c.foe)} Förderung</div>`; } } } else if(p.id==='kfw85eegzw'){ const topf=m.custom?'frei':begTopfFor(m.m); const i=_num(m.invest); if(nichtFoerderfaehig(m,'kfw85eegzw')){ priceHtml=i?`<div class="ms-note price">${_eur(i)} · <span class="ms-cap">nicht förderfähig</span></div>`:''; } else { let foe=0, satz=0; if(topf==='pool15'){ const share=gzwPc.gesamt>0?i/gzwPc.gesamt:0; foe=gzwPc.foe*share; satz=gzwPc.gesamt>0?(gzwPc.foe/gzwPc.gesamt*100):15; } else if(topf==='heiztausch'){ const ff=Math.min(i,heatCap(_num(d.we)||1)); satz=30; foe=ff*0.30; } priceHtml=i?`<div class="ms-note price">${_eur(i)} · ${deNum(satz,satz%1?1:0)} % = ${_eur(foe)} Förderung aus BEG EM</div>`:''; } } else { const mSatz=_num(d.satz); const noFoe=m.noFoe||nichtFoerderfaehig(m,p.id); const foe=_num(m.invest)*mSatz/100; priceHtml=_num(m.invest)?`<div class="ms-note price">${noFoe?`${_eur(_num(m.invest))} · <span class="ms-cap">nicht förderfähig</span>`:`${_eur(_num(m.invest))} · ${deNum(mSatz,mSatz%1?1:0)} % = ${_eur(foe)} Förderung`}</div>`:''; } return `<div class="ms"><div class="ms-n">M${idx+1}</div><div><div class="ms-name">${esc(m.m)} <span class="ms-badge ${m.b}">${m.b==='req'?'Voraussetzung':'Optional'}</span></div>${m.note?`<div class="ms-note">${esc(m.note)}</div>`:''}${priceHtml}</div></div>`; }).join(''); })()}
+          ${(()=>{ const begPc = (isBeg(p.id) && !isNWG()) ? begPoolCalc(p.id) : null; const gzwPc = p.id==='kfw85eegzw' ? begPoolCalcFor(d.massnahmen,_num(d.we)||1) : null; return (d.massnahmen||[]).map((m,idx)=>{ let priceHtml=''; if(p.id==='beg'){ const c=begMeasureCalc(m,begPc); if(c.invest){ if(c.noFoe){ priceHtml=`<div class="ms-note price">${_eur(c.invest)} · <span class="ms-cap">nicht förderfähig</span></div>`; } else { const ffNote = Math.abs(c.ff-c.invest)>1 ? ` · förderfähig ${_eur(c.ff)}` : ''; priceHtml=`<div class="ms-note price">${_eur(c.invest)}${ffNote} · ${deNum(c.satz,c.satz%1?1:0)} % = ${_eur(c.foe)} Förderung</div>`; } } } else if(p.id==='kfw85eegzw'){ const topf=m.custom?'frei':begTopfFor(m.m); const i=_num(m.invest); if(nichtFoerderfaehig(m,'kfw85eegzw')){ priceHtml=i?`<div class="ms-note price">${_eur(i)} · <span class="ms-cap">nicht förderfähig</span></div>`:''; } else { let foe=0, satz=0; if(topf==='pool15'){ const share=gzwPc.gesamt>0?i/gzwPc.gesamt:0; foe=gzwPc.foe*share; satz=gzwPc.gesamt>0?(gzwPc.foe/gzwPc.gesamt*100):15; } else if(topf==='heiztausch'){ const ff=Math.min(i,heatCap(_num(d.we)||1)); satz=30; foe=ff*0.30; } priceHtml=i?`<div class="ms-note price">${_eur(i)} · ${deNum(satz,satz%1?1:0)} % = ${_eur(foe)} Förderung aus BEG EM</div>`:''; } } else { const mSatz=_num(d.satz); const noFoe=m.noFoe||nichtFoerderfaehig(m,p.id); const foe=_num(m.invest)*mSatz/100; priceHtml=_num(m.invest)?`<div class="ms-note price">${noFoe?`${_eur(_num(m.invest))} · <span class="ms-cap">nicht förderfähig</span>`:`${_eur(_num(m.invest))} · ${deNum(mSatz,mSatz%1?1:0)} % = ${_eur(foe)} Förderung`}</div>`:''; } return `<div class="ms"><div class="ms-n">M${idx+1}</div><div><div class="ms-name">${esc(m.m)} <span class="ms-badge ${m.b}">${m.b==='req'?'Voraussetzung':'Optional'}</span></div>${m.note?`<div class="ms-note">${esc(m.note)}</div>`:''}${priceHtml}</div></div>`; }).join(''); })()}
         </div>
         <div>
           <div class="sec-h">Förderrechnung</div>
@@ -2193,7 +2205,7 @@ function renderDoc(){
             ${(d.kask||[]).map(k=>`<div class="kask-row"><span class="kl">${esc(k.l)}</span><span class="kv${k.pos?' pos':''}">${esc(k.v)}</span></div>`).join('')}
             <div class="kask-row sum"><span class="kl">Eigenanteil</span><span class="kv">${esc(kaskSum)}</span></div>
           </div>
-          ${p.id==='beg'?(isNWG()
+          ${isBeg(p.id)?(isNWG()
             ? `<div class="doc-cap-note"><b>Förderfähige Kosten (Nichtwohngebäude):</b> Bei BEG Einzelmaßnahmen gelten nutzungsabhängige Höchstgrenzen je m² NGF — Richtwert Gebäudehülle ${esc(S.obj.begCapM2)} €/m² NGF (≈ ${_eur(_num(S.obj.begCapM2)*_qm())} bei ${esc(S.obj.qm)} m² NGF). Die förderfähigen Kosten für die Heizung werden individuell ermittelt.</div>`
             : ''):''}
           <div class="d-res">
@@ -2210,7 +2222,7 @@ function renderDoc(){
           </div>`}
         </div>
       </div>
-      ${p.id==='beg'?(isNWG()
+      ${isBeg(p.id)?(isNWG()
         ? `<div class="isfp">
         <div class="isfp-txt">
           <div class="isfp-h">Wir begleiten Sie gerne bei der Antragstellung</div>
@@ -2225,10 +2237,10 @@ function renderDoc(){
         </div>
         <a class="isfp-btn" href="${begMailto()}">Angebot anfragen →</a>
       </div>`):''}
-      ${(p.id==='beg' && !isNWG() && isWPB())?`<div class="doc-cap-note"><b>Hinweis Worst Performing Building (ab Q1 2027):</b> Bitte beachten Sie: Ab Q1 2027 soll für Worst Performing Buildings ein zusätzlicher Bonus von 5 Prozentpunkten auf Dämmmaßnahmen der Gebäudehülle gelten. Fenster, Außentüren und sommerlicher Wärmeschutz sind ausgenommen. Sofern Sie Dämmmaßnahmen planen, kann es sinnvoll sein, den Antrag bis zum Inkrafttreten zurückzustellen. Sprechen Sie die Einzelheiten bitte mit uns ab.</div>`:''}
-      ${(p.id==='beg' && isNWG() && isWPB())?`<div class="doc-cap-note"><b>Hinweis Worst Performing Building (ab Q1 2027):</b> Bitte beachten Sie: Das Gebäude gilt als Worst Performing Building. Ab Q1 2027 soll hierfür ein zusätzlicher Bonus von 5 % der Investitionskosten auf Dämmmaßnahmen der Gebäudehülle gelten. Sofern Sie Dämmmaßnahmen planen, kann es sinnvoll sein, den Antrag bis zum Inkrafttreten zurückzustellen. Sprechen Sie die Einzelheiten bitte mit uns ab.</div>`:''}
-      ${(()=>{ if(p.id!=='beg') return ''; const si=begSplitInfo(); return si?`<div class="doc-cap-note"><b>Hinweis zum Förderrahmen:</b> Der gemeinsame Fördertopf Gebäudehülle/Anlagentechnik ist mit iSFP auf max. ${_eur(si.capMit)} pro Jahr und Wohneinheit begrenzt (Sockel ${_eur(si.capOhne)} zu 15 % + Mehrbetrag zu 20 %). Ihre geplanten Maßnahmen summieren sich auf ${_eur(si.gesamt)} — aktuell in einem Jahr davon förderfähig: ${_eur(si.foerderfaehig)}, das entspricht ${_eur(si.foe)} Förderung. Teilen Sie die Maßnahmen auf ${si.years} Jahre auf, lässt sich die Förderung auf bis zu <b>${_eur(si.totalFoe)}</b> steigern.</div>`:''; })()}
-      ${p.id!=='beg'?(()=>{ const perWE=kfwMaxWE(p.id), we=_num(S.obj.we)||0, tot=perWE*we; const capTot=Math.min(NWG_EG_M2_CAP*_qm(), NWG_EG_ABS_CAP);
+      ${(isBeg(p.id) && !isNWG() && isWPB())?`<div class="doc-cap-note"><b>Hinweis Worst Performing Building (ab Q1 2027):</b> Bitte beachten Sie: Ab Q1 2027 soll für Worst Performing Buildings ein zusätzlicher Bonus von 5 Prozentpunkten auf Dämmmaßnahmen der Gebäudehülle gelten. Fenster, Außentüren und sommerlicher Wärmeschutz sind ausgenommen. Sofern Sie Dämmmaßnahmen planen, kann es sinnvoll sein, den Antrag bis zum Inkrafttreten zurückzustellen. Sprechen Sie die Einzelheiten bitte mit uns ab.</div>`:''}
+      ${(isBeg(p.id) && isNWG() && isWPB())?`<div class="doc-cap-note"><b>Hinweis Worst Performing Building (ab Q1 2027):</b> Bitte beachten Sie: Das Gebäude gilt als Worst Performing Building. Ab Q1 2027 soll hierfür ein zusätzlicher Bonus von 5 % der Investitionskosten auf Dämmmaßnahmen der Gebäudehülle gelten. Sofern Sie Dämmmaßnahmen planen, kann es sinnvoll sein, den Antrag bis zum Inkrafttreten zurückzustellen. Sprechen Sie die Einzelheiten bitte mit uns ab.</div>`:''}
+      ${(()=>{ if(!isBeg(p.id)) return ''; const si=begSplitInfo(p.id); return si?`<div class="doc-cap-note"><b>Hinweis zum Förderrahmen:</b> Der gemeinsame Fördertopf Gebäudehülle/Anlagentechnik ist mit iSFP auf max. ${_eur(si.capMit)} pro Jahr und Wohneinheit begrenzt (Sockel ${_eur(si.capOhne)} zu 15 % + Mehrbetrag zu 20 %). Ihre geplanten Maßnahmen summieren sich auf ${_eur(si.gesamt)} — aktuell in einem Jahr davon förderfähig: ${_eur(si.foerderfaehig)}, das entspricht ${_eur(si.foe)} Förderung. Teilen Sie die Maßnahmen auf ${si.years} Jahre auf, lässt sich die Förderung auf bis zu <b>${_eur(si.totalFoe)}</b> steigern.</div>`:''; })()}
+      ${!isBeg(p.id)?(()=>{ const perWE=kfwMaxWE(p.id), we=_num(S.obj.we)||0, tot=perWE*we; const capTot=Math.min(NWG_EG_M2_CAP*_qm(), NWG_EG_ABS_CAP);
         const info = p.id==='kfw85eegzw'
           ? `Um den Standard KfW 85 EE zu erreichen, gibt es von der KfW-Bank <b>keinen Tilgungszuschuss</b> auf den Kredit. Wir empfehlen daher, die nötigen Maßnahmen über die <b>BEG Einzelmaßnahmen</b> fördern zu lassen — die dafür erreichbare Förderung haben wir oben bei den Maßnahmen bereits für Sie kalkuliert.`
           : isNWG()
@@ -2241,7 +2253,7 @@ function renderDoc(){
         </div>
         <a class="isfp-btn" href="${kfwMailto(p)}">Beratung anfragen →</a>
       </div>`; })():''}
-      ${(p.id!=='beg'&&p.id!=='kfw85eegzw')?(()=>{ const inv=_num(d.invest); if(!inv) return '';
+      ${(!isBeg(p.id)&&p.id!=='kfw85eegzw')?(()=>{ const inv=_num(d.invest); if(!inv) return '';
         const annuity=(rate,years,principal)=>{ const r=rate/100/12, n=years*12; const pay=r===0?principal/n:principal*r/(1-Math.pow(1+r,-n)); return pay*n; };
         const kfwCost=annuity(2,10,inv), marktCost=annuity(4.5,10,inv), diff=marktCost-kfwCost;
         return `<div class="doc-cap-note"><b>Zinsvorteil KfW-Kredit:</b> Über die KfW profitieren Sie zusätzlich zum Tilgungszuschuss von deutlich günstigeren Krediten — schon ab rund 2 % effektivem Jahreszins. Bei ${_eur(inv)} Kreditsumme und 10 Jahren Laufzeit: Gesamtkosten (Zins &amp; Tilgung) bei 2 % KfW-Zins ≈ ${_eur(kfwCost)}, bei einem marktüblichen Sanierungskredit von 4,5 % ≈ ${_eur(marktCost)} — ein Zinsvorteil von rund <b>${_eur(diff)}</b> über die Laufzeit. <a href="${KFW_LINK}" target="_blank" rel="noopener">Aktuelle Zinsen ansehen →</a></div>`; })():''}
@@ -2510,7 +2522,8 @@ function renderProgToggles(){
     const on = S.progAktiv.includes(p.id);
     return `<label class="prog-toggle${on?' on':''}"><input type="checkbox" ${on?'checked':''} onchange="toggleProg('${p.id}',this.checked)"> ${esc(p.name)} <span style="margin-left:auto;font-family:var(--font-mono);font-size:9px;color:var(--steel);font-weight:500">${esc(p.typ)}</span></label>`;
   };
-  const bund = isNBNWG() ? PROGRAMME_KATALOG_NBNWG : (isNB() ? PROGRAMME_KATALOG_NB : (isNWG() ? PROGRAMME_KATALOG_NWG : PROGRAMME_KATALOG_WG));
+  const bund0 = isNBNWG() ? PROGRAMME_KATALOG_NBNWG : (isNB() ? PROGRAMME_KATALOG_NB : (isNWG() ? PROGRAMME_KATALOG_NWG : PROGRAMME_KATALOG_WG));
+  const bund = (isNB()||isNBNWG()) ? bund0 : PK().filter(p=>bund0.some(b=>b.id===p.id)||isBeg(p.id));
   let html = `<div class="prog-cat">${isNB()?'Neubau · Bundesförderung':'Bundesförderung'}</div>` + bund.map(tog).join('');
   if(istBerlin() && !isNB()){
     const calc = PROGRAMME_KOMMUNAL_BERLIN.filter(p=>!p.info), info = PROGRAMME_KOMMUNAL_BERLIN.filter(p=>p.info);
@@ -2539,7 +2552,7 @@ function renderProgBlocks(){
   if(!active.length){ box.innerHTML='<div class="hint">Noch kein Programm gewählt.</div>'; return; }
   box.innerHTML = active.map(p=>{
     const d = S.prog[p.id];
-    if(p.id==='beg') return begBlockHtml(p);
+    if(isBeg(p.id)) return begBlockHtml(p);
     if(p.id==='gzw') return gzwBlockHtml(p);
     if(p.id==='ibbsolarl') return ibbBlockHtml(p);
     if(p.id==='ibbco2') return ibbco2BlockHtml(p);
@@ -2555,7 +2568,7 @@ function renderProgBlocks(){
         <div class="fld"><label>Klasse</label><select oninput="editProg('${p.id}','klasse',this.value)" onchange="editProg('${p.id}','klasse',this.value)">${['—',...EEK].map(c=>`<option ${d.klasse===c?'selected':''}>${c}</option>`).join('')}</select></div>
         <div class="fld"><label>Klasse-Zusatz</label><input value="${esc(d.klasseKwh)}" oninput="editProg('${p.id}','klasseKwh',this.value)"></div>
       </div>
-      <div class="fld"><label>Energieeffizienzklasse <span class="rec-lab">Variantenvergleich</span></label>${eekSelect(p.id, `editProg('${p.id}','eek',this.value)`)}</div>
+      <div class="fld"><label>KfW EH Standard <span class="rec-lab">Variantenvergleich</span></label>${eekSelect(p.id, `editProg('${p.id}','eek',this.value)`)}</div>
       ${(isNWG()&&p.id!=='kfw85eegzw')?`<div class="fld"><label>Bewertung (Farbe)</label><div class="farb-sw">${NWG_FARBEN.map(c=>`<span class="${c===d.farbe?'sel':''}" style="background:${c}" onclick="setProgFarbe('${p.id}','${c}')"></span>`).join('')}</div></div>`:''}
       <div class="row3">
         <div class="fld"><label>Primär kWh/m²a</label><input value="${esc(d.pe||'')}" oninput="editProg('${p.id}','pe',this.value)"></div>
@@ -2620,7 +2633,7 @@ function begKostenrahmenMit(n){ n=Math.max(1,n); return n<=6 ? 60000+30000*(n-1)
 function nichtFoerderfaehig(m, pid){
   if(!m || m.custom) return false;
   if(/photovoltaik/i.test(m.m||'')) return true;
-  if(pid==='beg' && isNWG() && m.m==='Beleuchtung (LED-Umrüstung)') return true;
+  if(isBeg(pid) && isNWG() && m.m==='Beleuchtung (LED-Umrüstung)') return true;
   return false;
 }
 function begTopfFor(name){
@@ -2641,9 +2654,12 @@ function begPoolCalcFor(massnahmen, we){
   const foerderfaehig=sockel+mehrbetrag;
   return {gesamt, capOhne, capMit, sockel, mehrbetrag, foe, foerderfaehig};
 }
-function begPoolCalc(){
+function begVarianten(){ return Object.keys(S.prog).filter(id=>id==='beg'||/^begv\d+$/.test(id)).sort((a,b)=>a==='beg'?-1:b==='beg'?1:(_num(a.slice(4))-_num(b.slice(4)))); }
+function isBeg(id){ return id==='beg'||/^begv\d+$/.test(id); }
+function begName(id){ if(id==='beg') return 'BEG Einzelmaßnahmen'; const i=begVarianten().indexOf(id); return 'BEG Einzelmaßnahmen · Variante '+String.fromCharCode(65+Math.max(0,i)); }
+function begPoolCalc(id){
   const we=_num(S.obj.we)||1;
-  return begPoolCalcFor(S.prog.beg.massnahmen, we);
+  return begPoolCalcFor(S.prog[id||'beg'].massnahmen, we);
 }
 function kfwGzwBegCalc(){
   const d=S.prog.kfw85eegzw; if(!d) return {poolFoe:0,heizFoe:0,totalFoe:0,we:0};
@@ -2653,9 +2669,9 @@ function kfwGzwBegCalc(){
   (d.massnahmen||[]).forEach(m=>{ if(!m.custom && begTopfFor(m.m)==='heiztausch'){ const ff=Math.min(_num(m.invest), heatCap(we)); heizFoe += ff*0.30; } });
   return { poolFoe:pc.foe, poolFF:pc.foerderfaehig, heizFoe, totalFoe: pc.foe+heizFoe, we };
 }
-function begSplitInfo(){
+function begSplitInfo(id){
   if(isNWG()) return null;
-  const pc=begPoolCalc();
+  const pc=begPoolCalc(id);
   if(pc.gesamt<=pc.capMit) return null;
   const foePerFull = pc.capOhne*0.15 + (pc.capMit-pc.capOhne)*0.20;
   const years = Math.ceil(pc.gesamt/pc.capMit);
@@ -2683,9 +2699,10 @@ function begMeasureCalc(m, pc){
   return {topf, invest:i, ff, satz:s, foe:ff*s/100};
 }
 function begMeasureFoe(m, pc){ return begMeasureCalc(m,pc).foe; }
-function recalcBeg(){
-  const d = S.prog.beg; if(!d) return;
-  const pc = !isNWG() ? begPoolCalc() : null;
+function recalcBeg(id){
+  id=id||'beg';
+  const d = S.prog[id]; if(!d) return;
+  const pc = !isNWG() ? begPoolCalc(id) : null;
   let inv=0, foe=0;
   (d.massnahmen||[]).forEach(m=>{ inv+=_num(m.invest); foe+=begMeasureFoe(m,pc); });
   const we = _num(S.obj.we)||1;
@@ -2697,14 +2714,15 @@ function recalcBeg(){
   d.netto = _eur(inv-foe);
   d.kask = [ {l:'Investition gesamt',v:_eur(inv)}, {l:'Förderung gesamt',v:'− '+_eur(foe),pos:true} ];
 }
-function begTotalsHtml(){
-  const d = S.prog.beg; const pc = !isNWG() ? begPoolCalc() : null;
+function begTotalsHtml(id){
+  id=id||'beg';
+  const d = S.prog[id]; const pc = !isNWG() ? begPoolCalc(id) : null;
   let inv=0, foe=0;
   (d.massnahmen||[]).forEach(m=>{ inv+=_num(m.invest); foe+=begMeasureFoe(m,pc); });
   let rows=`<div class="beg-tot-row"><span>Investition gesamt</span><b>${_eur(inv)}</b></div>`;
   rows+=`<div class="beg-tot-row"><span>Förderung gesamt</span><b class="pos">− ${_eur(foe)}</b></div>`;
   rows+=`<div class="beg-tot-row sum"><span>Eigenanteil</span><b>${_eur(inv-foe)}</b></div>`;
-  const si = begSplitInfo();
+  const si = begSplitInfo(id);
   if(si) rows+=`<div class="beg-cap-note">Der 15%-Topf ist mit iSFP auf max. ${_eur(si.capMit)}/Jahr/WE begrenzt. Bei ${_eur(si.gesamt)} geplanten Kosten sind aktuell ${_eur(si.foerderfaehig)} förderfähig (${_eur(si.foe)} Förderung). Aufteilung auf ${si.years} Jahre: bis zu <b>${_eur(si.totalFoe)}</b> Förderung insgesamt möglich.</div>`;
   return rows;
 }
@@ -2770,99 +2788,122 @@ window.editKfw=(id,k,v)=>{
   const ms=document.getElementById('ms-'+id); if(ms) ms.innerHTML=renderMsEditor(id);
   refreshKfwCalc(id);
 };
-function renderBegMs(){
-  const pc = !isNWG() ? begPoolCalc() : null;
-  return (S.prog.beg.massnahmen||[]).map((m,i)=>{
+function renderBegMs(bid){
+  bid=bid||'beg';
+  const pc = !isNWG() ? begPoolCalc(bid) : null;
+  return (S.prog[bid].massnahmen||[]).map((m,i)=>{
     const c = begMeasureCalc(m, pc);
     const topf = c.topf;
     const fixedSatz = !isNWG() && (topf==='pool15'||topf==='em50');
     const showHeiz = topf==='heiztausch' || (topf==='frei' && m.custom);
     const capped = showHeiz && m.heiz && _num(m.invest)>heizCapCurrent();
     const nameField = m.custom
-      ? `<input type="text" class="beg-name" value="${esc(m.m)}" placeholder="Maßnahme (Freitext, z. B. Smart Home)" oninput="editBeg(${i},'m',this.value)">`
-      : `<select class="beg-name" onchange="editBeg(${i},'m',this.value)">${MASSNAHMEN.map(x=>`<option ${m.m===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`;
+      ? `<input type="text" class="beg-name" value="${esc(m.m)}" placeholder="Maßnahme (Freitext, z. B. Smart Home)" oninput="editBeg(${i},'m',this.value,'${bid}')">`
+      : `<select class="beg-name" onchange="editBeg(${i},'m',this.value,'${bid}')">${MASSNAHMEN.map(x=>`<option ${m.m===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`;
     const satzField = c.noFoe
       ? `<span class="beg-calc" style="font-size:11px">nicht förderfähig</span>`
       : fixedSatz
       ? `<span class="beg-calc" style="font-size:11px">${topf==='em50'?'50 % fix':'Ø '+deNum(c.satz,1)+' %'}</span>`
-      : `<input type="text" inputmode="decimal" value="${esc(m.satz||'')}" placeholder="0" oninput="editBeg(${i},'satz',this.value)">`;
+      : `<input type="text" inputmode="decimal" value="${esc(m.satz||'')}" placeholder="0" oninput="editBeg(${i},'satz',this.value,'${bid}')">`;
     return `<div class="beg-ms">
       <div class="beg-ms-top">
         ${nameField}
-        <select class="beg-badge" onchange="editBeg(${i},'b',this.value)"><option value="req" ${m.b!=='opt'?'selected':''}>Voraussetzung</option><option value="opt" ${m.b==='opt'?'selected':''}>Optional</option></select>
-        <button class="mini-del" onclick="begDel(${i})">×</button>
+        <select class="beg-badge" onchange="editBeg(${i},'b',this.value,'${bid}')"><option value="req" ${m.b!=='opt'?'selected':''}>Voraussetzung</option><option value="opt" ${m.b==='opt'?'selected':''}>Optional</option></select>
+        <button class="mini-del" onclick="begDel(${i},'${bid}')">×</button>
       </div>
       <div class="beg-ms-grid">
-        <label>Investition €<input type="text" inputmode="decimal" value="${esc(m.invest||'')}" placeholder="0" oninput="editBeg(${i},'invest',this.value)"></label>
+        <label>Investition €<input type="text" inputmode="decimal" value="${esc(m.invest||'')}" placeholder="0" oninput="editBeg(${i},'invest',this.value,'${bid}')"></label>
         <label>Fördersatz %${satzField}</label>
-        <label>Förderung<span class="beg-calc" id="begf-${i}">${c.noFoe?'—':_eur(c.foe)}</span></label>
+        <label>Förderung<span class="beg-calc" id="begf-${bid}-${i}">${c.noFoe?'—':_eur(c.foe)}</span></label>
       </div>
       ${c.noFoe?`<div class="beg-pool-note">${/photovoltaik/i.test(m.m||'')?'Photovoltaik ist weder über BEG noch über KfW förderfähig — der Betrag zählt zur Investition, nicht zur Förderung.':'Innenbeleuchtung ist bei Nichtwohngebäuden nicht mehr förderfähig.'}</div>`:''}
       ${topf==='pool15'?`<div class="beg-pool-note">Gemeinsamer 15%-Fördertopf Gebäudehülle/Anlagentechnik — Kostenrahmen wird über alle Maßnahmen dieses Topfs gemeinsam ermittelt (inkl. iSFP-Bonus).</div>`:''}
       ${topf==='em50'?`<div class="beg-pool-note">Heizungsoptimierung zur Emissionsminderung — feste Förderung von 50 %, außerhalb des Hülle-Topfs.</div>`:''}
-      ${showHeiz?`<label class="beg-heiz"><input type="checkbox" ${m.heiz?'checked':''} onchange="editBeg(${i},'heiz',this.checked)"> Heizung/Wärme — Förderobergrenze anwenden${capped?` <span class="beg-heiz-note">(max. förderfähig ${_eur(heizCapCurrent())})</span>`:''}</label>`:''}
-      <input type="text" class="beg-note" value="${esc(m.note||'')}" placeholder="Notiz (optional)" oninput="editBeg(${i},'note',this.value)">
+      ${showHeiz?`<label class="beg-heiz"><input type="checkbox" ${m.heiz?'checked':''} onchange="editBeg(${i},'heiz',this.checked,'${bid}')"> Heizung/Wärme — Förderobergrenze anwenden${capped?` <span class="beg-heiz-note">(max. förderfähig ${_eur(heizCapCurrent())})</span>`:''}</label>`:''}
+      <input type="text" class="beg-note" value="${esc(m.note||'')}" placeholder="Notiz (optional)" oninput="editBeg(${i},'note',this.value,'${bid}')">
     </div>`;
   }).join('');
 }
 function begBlockHtml(p){
-  const d = S.prog.beg;
+  const id=p.id, d = S.prog[id];
+  const kann=begVarianten().length>1;
   return `<div class="prog-block">
-    <div class="pbh">${esc(p.name)} <span class="rec-lab">auto berechnet</span></div>
-    <label class="rec-check"><input type="checkbox" ${S.progRec===p.id?'checked':''} onchange="setRec('beg',this.checked)"> Als Empfehlung markieren</label>
-    <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editProg('beg','lead',this.value)">${esc(d.lead)}</textarea></div>
-    <div class="row2">
-      <div class="fld"><label>Klasse</label><select onchange="editProg('beg','klasse',this.value)">${['—',...EEK].map(c=>`<option ${d.klasse===c?'selected':''}>${c}</option>`).join('')}</select></div>
-      <div class="fld"><label>Klasse-Zusatz</label><input value="${esc(d.klasseKwh)}" oninput="editProg('beg','klasseKwh',this.value)"></div>
+    <div class="pbh">${esc(begName(id))} <span class="rec-lab">auto berechnet</span></div>
+    <label class="rec-check"><input type="checkbox" ${S.progRec===id?'checked':''} onchange="setRec('${id}',this.checked)"> Als Empfehlung markieren</label>
+    <div style="display:flex;gap:6px;margin:4px 0 8px;flex-wrap:wrap">
+      <button class="mini-add" onclick="begVarAdd('${id}')">+ Variante (Kopie)</button>
+      ${(kann&&id!=='beg')?`<button class="mini-del" style="width:auto;padding:0 8px" onclick="begVarDel('${id}')">Variante entfernen</button>`:''}
     </div>
-    <div class="fld"><label>Energieeffizienzklasse <span class="rec-lab">Variantenvergleich</span></label>${eekSelect('beg', `editProg('beg','eek',this.value)`)}</div>
-    ${isNWG()?`<div class="fld"><label>Bewertung (Farbe)</label><div class="farb-sw">${NWG_FARBEN.map(c=>`<span class="${c===d.farbe?'sel':''}" style="background:${c}" onclick="setProgFarbe('beg','${c}')"></span>`).join('')}</div></div>`:''}
+    <div class="fld"><label>Kurzbeschreibung (Detailseite)</label><textarea rows="3" oninput="editProg('${id}','lead',this.value)">${esc(d.lead)}</textarea></div>
+    <div class="row2">
+      <div class="fld"><label>Klasse</label><select onchange="editProg('${id}','klasse',this.value)">${['—',...EEK].map(c=>`<option ${d.klasse===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="fld"><label>Klasse-Zusatz</label><input value="${esc(d.klasseKwh)}" oninput="editProg('${id}','klasseKwh',this.value)"></div>
+    </div>
+    <div class="fld"><label>KfW EH Standard <span class="rec-lab">Variantenvergleich</span></label>${eekSelect(id, `editProg('${id}','eek',this.value)`)}</div>
+    ${isNWG()?`<div class="fld"><label>Bewertung (Farbe)</label><div class="farb-sw">${NWG_FARBEN.map(c=>`<span class="${c===d.farbe?'sel':''}" style="background:${c}" onclick="setProgFarbe('${id}','${c}')"></span>`).join('')}</div></div>`:''}
     <div class="row3">
-      <div class="fld"><label>Primär kWh/m²a</label><input value="${esc(d.pe||'')}" oninput="editProg('beg','pe',this.value)"></div>
-      <div class="fld"><label>End kWh/m²a</label><input value="${esc(d.ee||'')}" oninput="editProg('beg','ee',this.value)"></div>
-      <div class="fld"><label>CO₂ kg/m²a</label><input value="${esc(d.co2||'')}" oninput="editProg('beg','co2',this.value)"></div>
+      <div class="fld"><label>Primär kWh/m²a</label><input value="${esc(d.pe||'')}" oninput="editProg('${id}','pe',this.value)"></div>
+      <div class="fld"><label>End kWh/m²a</label><input value="${esc(d.ee||'')}" oninput="editProg('${id}','ee',this.value)"></div>
+      <div class="fld"><label>CO₂ kg/m²a</label><input value="${esc(d.co2||'')}" oninput="editProg('${id}','co2',this.value)"></div>
     </div>
     <div class="row2">
-      <div class="fld"><label>CO₂-Red.</label><input value="${esc(d.co2Red)}" oninput="editProg('beg','co2Red',this.value)"></div>
-      <div class="fld"><label>CO₂-Rest</label><input value="${esc(d.co2Rest)}" oninput="editProg('beg','co2Rest',this.value)"></div>
+      <div class="fld"><label>CO₂-Red.</label><input value="${esc(d.co2Red)}" oninput="editProg('${id}','co2Red',this.value)"></div>
+      <div class="fld"><label>CO₂-Rest</label><input value="${esc(d.co2Rest)}" oninput="editProg('${id}','co2Rest',this.value)"></div>
     </div>
     <label class="beg-lbl">Maßnahmen — einzeln bepreist</label>
-    <div id="ms-beg">${renderBegMs()}</div>
+    <div id="ms-${id}">${renderBegMs(id)}</div>
     <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
-      <button class="mini-add" onclick="begAdd(false)">+ Katalog-Maßnahme</button>
-      <button class="mini-add" onclick="begAdd(true)">+ Freitext (Smart Home …)</button>
+      <button class="mini-add" onclick="begAdd(false,'${id}')">+ Katalog-Maßnahme</button>
+      <button class="mini-add" onclick="begAdd(true,'${id}')">+ Freitext (Smart Home …)</button>
     </div>
-    <div class="beg-totals" id="begTotals">${begTotalsHtml()}</div>
+    <div class="beg-totals" id="begTotals-${id}">${begTotalsHtml(id)}</div>
   </div>`;
 }
-function refreshBeg(){
-  const c=document.getElementById('ms-beg'); if(c) c.innerHTML=renderBegMs();
-  const t=document.getElementById('begTotals'); if(t) t.innerHTML=begTotalsHtml();
+function refreshBeg(id){
+  id=id||'beg';
+  const c=document.getElementById('ms-'+id); if(c) c.innerHTML=renderBegMs(id);
+  const t=document.getElementById('begTotals-'+id); if(t) t.innerHTML=begTotalsHtml(id);
 }
-window.editBeg=(i,k,v)=>{
-  S.prog.beg.massnahmen[i][k]=v;
-  if(k==='m'){ const m=S.prog.beg.massnahmen[i]; if(!m.custom && begTopfFor(v)==='heiztausch'){ m.satz='30'; m.heiz=true; } }
-  recalcBeg(); save(); renderDoc();
-  const mm = S.prog.beg.massnahmen[i];
+window.begVarAdd=(src)=>{
+  src=src||'beg';
+  let n=1; while(S.prog['begv'+n]) n++;
+  const neu='begv'+n;
+  S.prog[neu]=JSON.parse(JSON.stringify(S.prog[src]));
+  const i=S.progAktiv.indexOf(src);
+  if(i>=0) S.progAktiv.splice(i+1,0,neu); else S.progAktiv.push(neu);
+  recalcBeg(neu); save(); renderProgToggles(); renderProgBlocks(); renderDoc();
+};
+window.begVarDel=(id)=>{
+  if(id==='beg') return;
+  delete S.prog[id];
+  S.progAktiv=S.progAktiv.filter(x=>x!==id);
+  if(S.progRec===id) S.progRec='beg';
+  save(); renderProgToggles(); renderProgBlocks(); renderDoc();
+};
+window.editBeg=(i,k,v,id)=>{
+  id=id||'beg';
+  S.prog[id].massnahmen[i][k]=v;
+  if(k==='m'){ const m=S.prog[id].massnahmen[i]; if(!m.custom && begTopfFor(v)==='heiztausch'){ m.satz='30'; m.heiz=true; } }
+  recalcBeg(id); save(); renderDoc();
+  const mm = S.prog[id].massnahmen[i];
   // Reine Texteingaben: kein Neu-Rendern, damit das Feld den Fokus behält
   if(k==='note' || (k==='m' && mm && mm.custom)){
-    const t=document.getElementById('begTotals'); if(t) t.innerHTML=begTotalsHtml();
+    const t=document.getElementById('begTotals-'+id); if(t) t.innerHTML=begTotalsHtml(id);
     return;
   }
   if(k==='invest'||k==='satz'){
-    // leichtes Update: nur berechnete Werte, Eingabefeld behält Fokus
-    const pc = !isNWG() ? begPoolCalc() : null;
-    S.prog.beg.massnahmen.forEach((m,idx)=>{
+    const pc = !isNWG() ? begPoolCalc(id) : null;
+    S.prog[id].massnahmen.forEach((m,idx)=>{
       const c=begMeasureCalc(m,pc);
-      const el=document.getElementById('begf-'+idx); if(el) el.textContent=_eur(c.foe);
+      const el=document.getElementById(`begf-${id}-${idx}`); if(el) el.textContent=_eur(c.foe);
     });
-    const t=document.getElementById('begTotals'); if(t) t.innerHTML=begTotalsHtml();
+    const t=document.getElementById('begTotals-'+id); if(t) t.innerHTML=begTotalsHtml(id);
     return;
   }
-  refreshBeg();
+  refreshBeg(id);
 };
-window.begDel=(i)=>{ S.prog.beg.massnahmen.splice(i,1); recalcBeg(); save(); refreshBeg(); renderDoc(); };
-window.begAdd=(custom)=>{ const s=isNWG()?'15':'20'; S.prog.beg.massnahmen.push(custom?{m:'',b:'req',note:'',invest:'',satz:s,custom:true}:{m:MASSNAHMEN[0],b:'req',note:'',invest:'',satz:s}); recalcBeg(); save(); refreshBeg(); renderDoc(); };
+window.begDel=(i,id)=>{ id=id||'beg'; S.prog[id].massnahmen.splice(i,1); recalcBeg(id); save(); refreshBeg(id); renderDoc(); };
+window.begAdd=(custom,id)=>{ id=id||'beg'; const s=isNWG()?'15':'20'; S.prog[id].massnahmen.push(custom?{m:'',b:'req',note:'',invest:'',satz:s,custom:true}:{m:MASSNAHMEN[0],b:'req',note:'',invest:'',satz:s}); recalcBeg(id); save(); refreshBeg(id); renderDoc(); };
 
 function renderMsEditor(pid){
   const satz=_num(S.prog[pid].satz);
