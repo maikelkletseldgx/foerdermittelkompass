@@ -50,7 +50,7 @@
   .proj-btns{ display:flex; gap:6px; margin-top:6px; flex-wrap:wrap }
   .proj-btns button{ flex:1; min-width:70px; padding:7px 6px; border:1px solid var(--line); border-radius:6px; background:#fff; font-family:var(--font-sans); font-size:10.5px; font-weight:700; color:var(--steel-dk); cursor:pointer }
   .proj-btns button:hover{ background:var(--cloud) }
-  .typ-seg button{ flex:1 1 45%; padding:9px 6px; border:none; background:#fff; font-family:var(--font-sans); font-size:11px; font-weight:700; color:var(--steel); cursor:pointer; border-right:1px solid var(--line); border-bottom:1px solid var(--line) }--line) }
+  .typ-seg button{ flex:1 1 45%; padding:9px 6px; border:none; background:#fff; font-family:var(--font-sans); font-size:11px; font-weight:700; color:var(--steel); cursor:pointer; border-right:1px solid var(--line); border-bottom:1px solid var(--line) }
   .typ-seg button:last-child{ border-right:none }
   .typ-seg button.on{ background:var(--ink); color:#fff }
   .farb-sw{ display:flex; gap:5px; margin-top:4px }
@@ -132,6 +132,75 @@
   .isfp-btn:hover{ filter:brightness(1.06) }
   .isfp-txt p a{ color:var(--sand); text-decoration:underline; font-weight:700 }
   .isfp-txt p a:hover{ color:#fff }
+  /* ---- Modernisierungsumlage (Addon) ---- */
+  .mod-lead{ font-size:12.5px; line-height:1.6; color:var(--steel-dk); max-width:170mm; margin-bottom:0 }
+  .mod-wf{ border-top:1px solid var(--ink); border-bottom:1.5px solid var(--ink); margin-top:0 }
+  .mod-wf .mod-wf-r:last-child{ border-bottom:none }
+  .mod-sec{ margin-top:9mm }
+  .mod-wf-r{ display:grid; grid-template-columns:1fr auto; align-items:baseline; gap:14px; padding:8px 0; border-bottom:1px solid var(--line) }
+  .mod-wf-r .wl{ font-size:11.5px; color:var(--ink-soft); font-weight:600 }
+  .mod-wf-r .ws{ display:block; font-size:9.5px; font-weight:400; color:var(--mute); margin-top:2px; max-width:120mm }
+  .mod-wf-r .wv{ font-family:var(--font-mono); font-size:13px; font-weight:600; color:var(--ink); white-space:nowrap }
+  .mod-wf-r.neg .wv{ color:var(--pos) }
+  .mod-wf-r.sum{ border-bottom:1.5px solid var(--ink); background:var(--cloud) }
+  .mod-wf-r.sum .wl{ font-weight:800 }
+  .mod-wf-r.sum .wv{ font-size:15px; font-weight:700 }
+  .mod-wf-r.fin{ border-bottom:none; background:var(--ink) }
+  .mod-wf-r.fin .wl{ color:#fff; font-weight:800 }
+  .mod-wf-r.fin .ws{ color:var(--fog) }
+  .mod-wf-r.fin .wv{ color:var(--sand); font-size:19px; font-weight:700 }
+  .mod-wf-r.sum, .mod-wf-r.fin{ padding:10px 12px }
+  .mod-wf.cmp .mod-wf-r{ padding:6px 0 }
+  .mod-wf.cmp .mod-wf-r .wl{ font-size:11px }
+  .mod-wf.cmp .mod-wf-r .ws{ font-size:9px; margin-top:1px }
+  .mod-wf.cmp .mod-wf-r .wv{ font-size:12px }
+  .mod-wf.cmp .mod-wf-r.sum, .mod-wf.cmp .mod-wf-r.fin{ padding:8px 10px }
+  .mod-tr{ margin-top:8mm }
+  .mod-tr-h{ display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; padding-bottom:6px }
+  .mod-tr-t{ font-size:12.5px; font-weight:800; color:var(--ink); letter-spacing:-.2px }
+  .mod-tr-b{ font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:var(--ink); color:#fff }
+  .mod-tr-b.alt{ background:var(--sand); color:var(--ink) }
+  .mod-tr-l{ font-family:var(--font-mono); font-size:8px; letter-spacing:.8px; text-transform:uppercase; color:var(--mute); margin-left:auto }
+  .mod-kpi{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--line); margin-top:0 }
+  .mod-k{ padding:11px 12px; border-right:1px solid var(--line) }
+  .mod-k:last-child{ border-right:none }
+  .mod-k .kl{ font-family:var(--font-mono); font-size:8px; letter-spacing:1.1px; text-transform:uppercase; color:var(--mute) }
+  .mod-k .kv{ font-size:19px; font-weight:700; letter-spacing:-.5px; margin-top:5px; color:var(--ink) }
+  .mod-k .ks{ font-size:9.5px; color:var(--steel); margin-top:3px; line-height:1.4 }
+  .mod-cap{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:2mm }
+  .mod-cap-c{ border:1px solid var(--line); padding:12px 14px }
+  .mod-cap-c.on{ border-color:var(--ink); background:var(--cloud) }
+  .mod-cap-c .cph{ display:flex; align-items:center; gap:7px; margin-bottom:8px }
+  .mod-cap-c .cpt{ font-size:11.5px; font-weight:700; color:var(--ink) }
+  .mod-cap-c .cpb{ font-family:var(--font-mono); font-size:7.5px; letter-spacing:1px; text-transform:uppercase; padding:2px 6px; border-radius:3px; background:var(--ink); color:#fff }
+  .mod-cap-c .cpr{ display:flex; justify-content:space-between; font-size:10.5px; color:var(--steel-dk); padding:3px 0 }
+  .mod-cap-c .cpr b{ font-family:var(--font-mono); color:var(--ink) }
+  .mod-cap-c .cpn{ font-size:9.5px; color:var(--mute); margin-top:7px; line-height:1.45; border-top:1px solid var(--line); padding-top:6px }
+  .mod-seg{ margin-top:0; border-top:1px solid var(--ink) }
+  .mod-seg-h, .mod-seg-r{ display:grid; grid-template-columns:2fr .7fr .6fr .8fr .95fr; align-items:baseline; gap:12px; padding:8px 10px; border-bottom:1px solid var(--line) }
+  .mod-seg-h{ font-family:var(--font-mono); font-size:7.5px; letter-spacing:1.1px; text-transform:uppercase; color:var(--mute); padding-bottom:5px }
+  .mod-seg-h span:not(:first-child), .mod-seg-r span:not(:first-child){ text-align:right }
+  .mod-seg-r .sl{ font-size:11.5px; font-weight:600; color:var(--ink) }
+  .mod-seg-r .sl small{ display:block; font-size:9.5px; font-weight:400; color:var(--mute); margin-top:2px; line-height:1.4 }
+  .mod-seg-r span{ font-family:var(--font-mono); font-size:11.5px; color:var(--ink-soft) }
+  .mod-seg-r span:first-child{ font-family:var(--font-sans) }
+  .mod-seg-r .cap{ color:var(--warn) }
+  .mod-seg-r.tot{ background:var(--ink); border-bottom:none }
+  .mod-seg-r.tot .sl, .mod-seg-r.tot span{ color:#fff; font-weight:700 }
+  .mod-seg-r.tot .hi{ color:var(--sand) }
+  .mod-loss{ display:flex; justify-content:space-between; align-items:baseline; gap:14px; border:1px solid var(--line); border-top:none; padding:9px 10px; font-size:10.5px; color:var(--steel-dk) }
+  .mod-loss b{ font-family:var(--font-mono); font-size:12px; color:var(--ink) }
+  .mod-steps{ display:flex; flex-direction:column; gap:0; border-left:1.5px solid var(--fog); margin:1mm 0 0 4px; padding-left:0 }
+  .mod-step{ position:relative; padding:0 0 6mm 16px }
+  .mod-step:last-child{ padding-bottom:0 }
+  .mod-step::before{ content:''; position:absolute; left:-5.5px; top:4px; width:9px; height:9px; border-radius:50%; background:var(--sand); border:2px solid #fff }
+  .mod-step .sn{ font-family:var(--font-mono); font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--sand) }
+  .mod-step .st2{ font-size:12.5px; font-weight:700; color:var(--ink); margin-top:2px }
+  .mod-step .sd{ font-size:11px; line-height:1.55; color:var(--steel-dk); margin-top:3px; max-width:160mm }
+  .mod-hints{ display:grid; grid-template-columns:1fr 1fr; gap:0 22px; margin-top:0 }
+  .mod-hint{ padding:8px 0; border-top:1px solid var(--line) }
+  .mod-hint dt{ font-size:11px; font-weight:700; color:var(--ink); margin-bottom:3px }
+  .mod-hint dd{ font-size:10px; line-height:1.5; color:var(--steel-dk) }
   /* ---- Fazit-Seite ---- */
   .fazit-body{ max-width:172mm }
   .fazit-lead{ font-size:12.5px; line-height:1.6; color:var(--ink); margin-bottom:14px }
@@ -505,6 +574,27 @@
   <div class="grp">
     <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Programm-Daten</div>
     <div class="grp-body" id="progBlocks"></div>
+  </div>
+
+  <!-- MODERNISIERUNGSUMLAGE -->
+  <div class="grp closed">
+    <div class="grp-h" onclick="this.parentElement.classList.toggle('closed')">Modernisierungsumlage (Addon)</div>
+    <div class="grp-body">
+      <label class="auto-toggle"><input type="checkbox" id="modAktiv" onchange="setModAktiv(this.checked)"> Seiten zur Modernisierungsumlage ins Dokument aufnehmen</label>
+      <div class="row2">
+        <div class="fld"><label>Durchschnittsmiete € / m² kalt</label><input data-k="mod.miete" placeholder="9,20"></div>
+        <div class="fld"><label>Vermietete Wohnfläche m²</label><input data-k="mod.wfl" placeholder="leer = Gesamtfläche"></div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label>Instandhaltung übrige Maßn. %</label><input data-k="mod.instand" placeholder="30"></div>
+        <div class="fld"><label>Anteil Fläche unter 7 € / m² in %</label><input data-k="mod.anteilUnter7" placeholder="0"></div>
+      </div>
+      <div class="fld" style="margin-top:4px">
+        <label class="lab-gen">Maßnahmen der Heizungsspur <button type="button" class="fld-gen" onclick="modHeizAuto()">⟳ Automatik</button></label>
+        <div id="modHeizSel"></div>
+      </div>
+      <div class="hint">Die Umlage bezieht sich immer auf die als <b>Empfehlung</b> markierte Variante. Zuschuss und — bei Förderkrediten — der Zinsvorteil werden nach § 559a BGB abgezogen. Angehakte Maßnahmen laufen über § 559e BGB: 10 % Umlage, 15 % Erhaltungspauschale, Kappung 0,50 € / m². Die übrigen Maßnahmen laufen mit 8 %, der eingetragenen Pauschale und der Kappung 2 € / m² (Flächenanteil unter 7 € Bestandsmiete) bzw. 3 € / m².</div>
+    </div>
   </div>
 
   <!-- FAZIT -->
@@ -1277,6 +1367,7 @@ const DEFAULT = {
     kfweg40ee:    mkKfw(40,10,true),
     kfweg40eewpb: mkKfw(40,20,true, KFW_TIER[40].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).')
   },
+  mod:{ aktiv:false, miete:'', wfl:'', instand:'30', anteilUnter7:'0', heiz:{} },
   fazit:{
     lead:'Der vorliegende Fördermittelkompass wurde auf Basis der uns vorliegenden Objekt-, Verbrauchs- und Zustandsdaten nach bestem Wissen und Gewissen erstellt. Alle Förderbeträge, Effizienzkennwerte und Kostenangaben sind indikativ und beziehen sich auf den aktuellen Stand der Förderprogramme; verbindliche Konditionen ergeben sich erst im Rahmen der individuellen Antragstellung über den Finanzierungspartner bzw. die zuständige Förderstelle.',
     text:'Auf Grundlage der Analyse empfehlen wir die Umsetzung der als Empfehlung markierten Variante. Wir begleiten Sie gern bei der Detailberechnung, der Erstellung eines individuellen Sanierungsfahrplans sowie der vollständigen Antragstellung.',
@@ -1619,6 +1710,30 @@ if((S._v||0) < 31){
   for(const id in S.prog){ const d=S.prog[id]; if(!d||typeof d.eek!=='string') continue; d.eek = map[d.eek] || (/^EH /.test(d.eek)?d.eek:''); }
   S._v = 31;
 }
+// v32: Modernisierungsumlage (Addon)
+if((S._v||0) < 32){
+  if(!S.mod) S.mod = JSON.parse(JSON.stringify(DEFAULT.mod));
+if(!S.mod.heiz) S.mod.heiz = {};
+  S._v = 32;
+}
+// v35: manuelle Auswahl der Heizungsmaßnahmen
+if((S._v||0) < 35){
+  if(S.mod && !S.mod.heiz) S.mod.heiz = {};
+  S._v = 35;
+}
+// v34: Kappungsgrenzen je Flächenanteil (unter / ab 7 € je m²)
+if((S._v||0) < 34){
+  if(S.mod && S.mod.anteilUnter7===undefined) S.mod.anteilUnter7='0';
+  S._v = 34;
+}
+// v33: Instandhaltungspauschale auf gesetzliche 30 % (§ 559c BGB)
+if((S._v||0) < 33){
+  if(S.mod && (S.mod.instand==='15' || S.mod.instand===15 || !S.mod.instand)) S.mod.instand='30';
+  S._v = 33;
+}
+if(!S.mod) S.mod = JSON.parse(JSON.stringify(DEFAULT.mod));
+if(!S.mod.heiz) S.mod.heiz = {};
+
 save();
 
 function save(){
@@ -2080,6 +2195,257 @@ function objMetaLong(){ return (isNWG()||isNBNWG()) ? `${esc(S.obj.qm)} m² NGF 
 function objHead(){ return `<div class="obj"><b>${esc(S.obj.adresse)}</b><br>${esc(S.obj.plzort)}<br>${objMeta()}</div>`; }
 function footLine(n,tot){ return `<div class="foot"><span>DGX · Fördermittelkompass · ${esc(S.obj.adresse)}</span><span>Seite ${n} / ${tot}</span></div>`; }
 
+/* ---------- Modernisierungsumlage (Addon) ---------- */
+/* Zwei Rechenspuren: Heizungsanlage nach § 559e BGB (10 %, 15 % Pauschale, 0,50 €-Kappung)
+   und übrige Modernisierung nach § 559 BGB (8 %, 30 % Pauschale, 2/3 €-Kappung). */
+const MOD_SATZ = 8;
+const MOD_SATZ_HEIZ = 10;
+const MOD_INSTAND_STD = 30;
+const MOD_INSTAND_HEIZ = 15;
+const MOD_CAP_HEIZ = 0.50;
+const MOD_HEIZ_RX = /(heizung|wärmepumpe|fernwärme|wärmenetz|biomasse|pellet|holz|solarthermie|brennstoffzelle|heizkörper|fußbodenheizung|flächenheizung|warmwasserbereitung)/i;
+const MOD_HEIZ_EX_RX = /(heizungsoptimierung|hydraul|abgleich|rohrleitung)/i;
+function modOn(){ return !!(S.mod && S.mod.aktiv); }
+function modIsHeiz(m){
+  const t = String((m&&m.m)||'');
+  if(MOD_HEIZ_EX_RX.test(t)) return false;
+  if(MOD_HEIZ_RX.test(t)) return true;
+  return !!(m&&m.heiz);
+}
+function modHeizKey(m,i){ return i+'|'+String((m&&m.m)||''); }
+function modHeizListe(id){
+  const d=(S.prog&&S.prog[id])||{};
+  return (d.massnahmen||[]).map((m,i)=>({m, i, key:modHeizKey(m,i), auto:modIsHeiz(m)}));
+}
+/* Gewählte Schlüssel — ohne eigene Auswahl greift die automatische Erkennung */
+function modHeizSet(id){
+  const sel = S.mod && S.mod.heiz ? S.mod.heiz[id] : null;
+  if(Array.isArray(sel)) return sel;
+  return modHeizListe(id).filter(r=>r.auto).map(r=>r.key);
+}
+function modIstHeizGewaehlt(id, m, i){ return modHeizSet(id).includes(modHeizKey(m,i)); }
+function modHeizToggle(id, key, on){
+  if(!S.mod.heiz) S.mod.heiz={};
+  const set = new Set(modHeizSet(id));
+  if(on) set.add(key); else set.delete(key);
+  S.mod.heiz[id] = [...set];
+  save(); renderDoc();
+}
+function modHeizAuto(){
+  if(S.mod.heiz) delete S.mod.heiz[S.progRec];
+  save(); renderDoc();
+}
+function renderModHeiz(){
+  const box = document.getElementById('modHeizSel'); if(!box) return;
+  const id = S.progRec, rows = modHeizListe(id);
+  const bez = esc(isBeg(id)?begName(id):((PK().find(p=>p.id===id)||{}).name||''));
+  if(!rows.length){ box.innerHTML = '<div class="hint" style="margin:0">Die empfohlene Variante ('+bez+') enthält keine Einzelmaßnahmen — die gesamten Kosten laufen über § 559 BGB.</div>'; return; }
+  const manuell = !!(S.mod.heiz && Array.isArray(S.mod.heiz[id]));
+  box.innerHTML = rows.map(r=>{
+    const on = modIstHeizGewaehlt(id, r.m, r.i);
+    const key = String(r.key).replace(/'/g, "\\'");
+    return '<label class="beg-heiz"><input type="checkbox" '+(on?'checked':'')+' onchange="modHeizToggle(&quot;'+id+'&quot;,&quot;'+esc(key)+'&quot;,this.checked)"> '+esc(r.m.m)+'<span style="color:var(--mute);font-family:var(--font-mono);font-size:9px;margin-left:auto">'+(_num(r.m.invest)?_eur(_num(r.m.invest)):'—')+'</span></label>';
+  }).join('') + '<div class="hint" style="margin:4px 0 0">'+(manuell?'Manuelle Auswahl aktiv':'Automatische Erkennung')+' · Bezug: '+bez+'</div>';
+}
+function modZinsvorteil(invest, id){
+  if(!invest || isBeg(id) || id==='kfw85eegzw' || isInfoProg(id)) return 0;
+  const annuity=(rate,years,principal)=>{ const r=rate/100/12, n=years*12; const pay=r===0?principal/n:principal*r/(1-Math.pow(1+r,-n)); return pay*n; };
+  return Math.max(0, annuity(4.5,10,invest)-annuity(2,10,invest));
+}
+/* Investition und Förderung der empfohlenen Variante auf die beiden Spuren aufteilen */
+function modSplit(id, d, invest, zuschuss){
+  const ms = (d && d.massnahmen) || [];
+  let heizI=0, restI=0, heizF=0, restF=0, sumI=0, sumF=0;
+  const rows=[];
+  if(ms.length){
+    let begPc=null;
+    try{ begPc = (isBeg(id) && !isNWG()) ? begPoolCalc(id) : null; }catch(e){ begPc=null; }
+    ms.forEach(m=>{
+      let mi=_num(m.invest)||0, mf=0;
+      try{
+        if(isBeg(id) && begPc){ const c=begMeasureCalc(m,begPc); mi=c.invest||mi; mf=c.noFoe?0:(c.foe||0); }
+        else { const noFoe=m.noFoe||nichtFoerderfaehig(m,id); mf=noFoe?0:mi*(_num(d.satz)||0)/100; }
+      }catch(e){ mf=0; }
+      sumI+=mi; sumF+=mf; rows.push({m,mi,mf,idx:rows.length});
+    });
+  }
+  if(sumI>0){
+    const kI = invest/sumI;
+    const kF = sumF>0 ? zuschuss/sumF : 0;
+    rows.forEach(r=>{
+      const i = r.mi*kI;
+      const f = sumF>0 ? r.mf*kF : (invest>0 ? zuschuss*(i/invest) : 0);
+      if(modIstHeizGewaehlt(id, r.m, r.idx)){ heizI+=i; heizF+=f; } else { restI+=i; restF+=f; }
+    });
+  } else { restI=invest; restF=zuschuss; }
+  return {heizI, restI, heizF, restF, hatHeiz:heizI>0};
+}
+function modCalc(){
+  const id = S.progRec, d = (S.prog&&S.prog[id])||{};
+  const invest = _num(d.invest)||0;
+  const netto  = _num(d.netto)||0;
+  const zuschuss = Math.max(0, invest-netto);
+  const zinsGes = modZinsvorteil(invest, id);
+  const sp = modSplit(id, d, invest, zuschuss);
+  const flaeche = _num(S.mod.wfl) || _qm() || 0;
+  const miete = _num(S.mod.miete)||0;
+  const instPc = S.mod.instand===''||S.mod.instand==null ? MOD_INSTAND_STD : _num(S.mod.instand);
+  const zinsH = invest>0 ? zinsGes*(sp.heizI/invest) : 0;
+  const zinsR = zinsGes - zinsH;
+
+  /* Spur A — Heizungsanlage, § 559e BGB: erst Förderabzug, dann 15 % Pauschale */
+  const aNachFoe = Math.max(0, sp.heizI - sp.heizF - zinsH);
+  const aInstand = aNachFoe*MOD_INSTAND_HEIZ/100;
+  const aUmlagefaehig = Math.max(0, aNachFoe - aInstand);
+  const aJahr = aUmlagefaehig*MOD_SATZ_HEIZ/100;
+  const aRoh = flaeche ? aJahr/flaeche/12 : 0;
+  const aZul = Math.min(aRoh, MOD_CAP_HEIZ);
+  const aMehr = aZul*flaeche*12;
+  const aVerlust = Math.max(0, aJahr-aMehr);
+
+  /* Spur B — übrige Modernisierung, § 559 BGB */
+  const bInstand = sp.restI*instPc/100;
+  const bUmlagefaehig = Math.max(0, sp.restI - bInstand - sp.restF - zinsR);
+  const bJahr = bUmlagefaehig*MOD_SATZ/100;
+  const bRoh = flaeche ? bJahr/flaeche/12 : 0;
+  const pctU = Math.max(0, Math.min(100, _num(S.mod.anteilUnter7)||0));
+  const flU = flaeche*pctU/100, flO = flaeche-flU;
+  const bZulU = Math.min(bRoh, 2), bZulO = Math.min(bRoh, 3);
+  const bMehr = bZulU*flU*12 + bZulO*flO*12;
+  const bZul = flaeche ? bMehr/flaeche/12 : 0;
+  const bVerlust = Math.max(0, bJahr-bMehr);
+
+  const jahr = aJahr+bJahr;
+  const roh = aRoh+bRoh;
+  const mehr = aMehr+bMehr;
+  const zul = flaeche ? mehr/flaeche/12 : 0;
+  const verlust = aVerlust+bVerlust;
+  const eigen = Math.max(0, invest-zuschuss);
+  const amort = mehr>0 ? eigen/mehr : 0;
+  const we = _num(S.obj.we)||0;
+  return {id, name:isBeg(id)?begName(id):((PK().find(p=>p.id===id)||{}).name||''),
+    invest, zuschuss, zinsGes, flaeche, miete, instPc, we, proWe: we?invest/we:0,
+    heizI:sp.heizI, heizF:sp.heizF, restI:sp.restI, restF:sp.restF, hatHeiz:sp.hatHeiz, zinsH, zinsR,
+    aNachFoe, aInstand, aUmlagefaehig, aJahr, aRoh, aZul, aMehr, aVerlust,
+    bInstand, bUmlagefaehig, bJahr, bRoh, bZul, bMehr, bVerlust, bZulU, bZulO,
+    pctU, flU, flO, jahr, roh, mehr, zul, verlust, eigen, amort,
+    gekappt: roh>zul+0.0001};
+}
+function modEurM2(n){ return deNum(n,2)+' €'; }
+function modWfRow(label, sub, val, cls){
+  return '<div class="mod-wf-r'+(cls?' '+cls:'')+'"><span class="wl">'+label+(sub?'<span class="ws">'+sub+'</span>':'')+'</span><span class="wv">'+val+'</span></div>';
+}
+function modTrackHeiz(c){
+  return '<div class="mod-tr">'
+    + '<div class="mod-tr-h"><span class="mod-tr-t">Spur 1 · Heizungsanlage</span><span class="mod-tr-b">§ 559e BGB</span><span class="mod-tr-l">'+MOD_SATZ_HEIZ+' % Umlage · '+MOD_INSTAND_HEIZ+' % Pauschale · Kappung '+modEurM2(MOD_CAP_HEIZ)+' / m²</span></div>'
+    + '<div class="mod-wf cmp">'
+    + modWfRow('Kosten der Heizungsanlage','Wärmeerzeuger, Einbau und zugehörige Wärmeübergabe aus der empfohlenen Variante', _eur(c.heizI))
+    + modWfRow('abzüglich Fördermittel für die Heizung','Zwingend abzuziehen — ohne in Anspruch genommene Förderung ist § 559e BGB nicht anwendbar', '− '+_eur(c.heizF), 'neg')
+    + (c.zinsH>0?modWfRow('abzüglich Zinsvorteil des Förderkredits','Anteilig auf die Heizungskosten entfallender Zinsvorteil', '− '+_eur(c.zinsH), 'neg'):'')
+    + modWfRow('abzüglich Erhaltungspauschale '+MOD_INSTAND_HEIZ+' %','Pauschal auf die um die Förderung verminderten Kosten, § 559e Abs. 2 BGB', '− '+_eur(c.aInstand), 'neg')
+    + modWfRow('Umlagefähige Kosten der Heizung','', _eur(c.aUmlagefaehig), 'sum')
+    + modWfRow(MOD_SATZ_HEIZ+' % pro Jahr','Rechnerisch '+modEurM2(c.aRoh)+' je m² und Monat'+(c.aRoh>MOD_CAP_HEIZ?' — über der Kappungsgrenze':''), _eur(c.aJahr))
+    + '</div></div>';
+}
+function modTrackRest(c){
+  return '<div class="mod-tr">'
+    + '<div class="mod-tr-h"><span class="mod-tr-t">Spur 2 · Übrige Modernisierung</span><span class="mod-tr-b alt">§ 559 BGB</span><span class="mod-tr-l">'+MOD_SATZ+' % Umlage · '+deNum(c.instPc,0)+' % Pauschale · Kappung 2 / 3 € / m²</span></div>'
+    + '<div class="mod-wf cmp">'
+    + modWfRow('Kosten der übrigen Maßnahmen','Gebäudehülle, Anlagentechnik und Sonstiges der empfohlenen Variante', _eur(c.restI))
+    + modWfRow('abzüglich Instandhaltungsanteil '+deNum(c.instPc,0)+' %','Pauschal auf die Investitionskosten, § 559c BGB', '− '+_eur(c.bInstand), 'neg')
+    + modWfRow('abzüglich Fördermittel','Zuschuss bzw. Tilgungszuschuss für diese Maßnahmen, § 559a Abs. 1 BGB', '− '+_eur(c.restF), 'neg')
+    + (c.zinsR>0?modWfRow('abzüglich Zinsvorteil des Förderkredits','§ 559a Abs. 2 BGB', '− '+_eur(c.zinsR), 'neg'):'')
+    + modWfRow('Umlagefähige Kosten der übrigen Maßnahmen','', _eur(c.bUmlagefaehig), 'sum')
+    + modWfRow(MOD_SATZ+' % pro Jahr','Rechnerisch '+modEurM2(c.bRoh)+' je m² und Monat', _eur(c.bJahr))
+    + '</div></div>';
+}
+function modSegRow(label, sub, flaeche, grenze, roh){
+  const zul = Math.min(roh, grenze);
+  return '<div class="mod-seg-r">'
+    + '<span class="sl">'+label+'<small>'+sub+'</small></span>'
+    + '<span>'+(flaeche?deNum(flaeche,0)+' m²':'—')+'</span>'
+    + '<span>'+deNum(grenze,2)+' €</span>'
+    + '<span class="'+(roh>grenze+0.0001?'cap':'')+'">'+modEurM2(zul)+'</span>'
+    + '<span>'+_eur(zul*flaeche*12)+'</span>'
+    + '</div>';
+}
+function modSegHtml(c){
+  const tot = '<div class="mod-seg-r tot">'
+    + '<span class="sl">Gesamtgebäude</span>'
+    + '<span>'+(c.flaeche?deNum(c.flaeche,0)+' m²':'—')+'</span>'
+    + '<span>—</span>'
+    + '<span class="hi">'+modEurM2(c.zul)+'</span>'
+    + '<span class="hi">'+_eur(c.mehr)+'</span>'
+    + '</div>';
+  const loss = c.verlust>0
+    ? '<div class="mod-loss"><span>Durch die Kappungsgrenzen nicht durchsetzbarer Teil — rechnerisch möglich wären '+_eur(c.jahr)+' pro Jahr'+(c.aVerlust>0?', davon '+_eur(c.aVerlust)+' allein aus der 0,50-€-Grenze der Heizung':'')+'.</span><b>− '+_eur(c.verlust)+' p. a.</b></div>'
+    : '<div class="mod-loss"><span>Beide Spuren bleiben unter ihrer Kappungsgrenze — der Umlagebetrag ist vollständig durchsetzbar.</span><b>'+_eur(c.jahr)+' p. a.</b></div>';
+  return '<div class="mod-seg">'
+    + '<div class="mod-seg-h"><span>Spur und Flächenanteil</span><span>Fläche</span><span>Grenze</span><span>Umlage / m²</span><span>Mehreinnahme p. a.</span></div>'
+    + (c.hatHeiz?modSegRow('Heizungsanlage','§ 559e Abs. 3 · gesamte vermietete Fläche', c.flaeche, MOD_CAP_HEIZ, c.aRoh):'')
+    + modSegRow('Übrige Maßnahmen', 'Bestandsmiete unter 7 € / m² · '+deNum(c.pctU,0)+' % der Fläche', c.flU, 2, c.bRoh)
+    + modSegRow('Übrige Maßnahmen', 'Bestandsmiete ab 7 € / m² · '+deNum(100-c.pctU,0)+' % der Fläche', c.flO, 3, c.bRoh)
+    + tot + '</div>' + loss;
+}
+function modPagesHtml(total, n1){
+  const c = modCalc();
+  const instHint = c.proWe>10000;
+  const kick = n => '<div class="kick">'+String(n).padStart(2,'0')+' · Modernisierungsumlage</div>';
+
+  const p1 = '<div class="page">'
+    + '<div class="ph"><div>'+kick(n1)+'<h2>Was auf die Miete umlegbar ist.</h2></div>'+objHead()+'</div>'
+    + '<div class="rule"></div>'
+    + '<div class="mod-lead">Für den Heizungstausch und für die übrigen Modernisierungsmaßnahmen gelten unterschiedliche Regeln: Umlagesatz, Erhaltungspauschale und Kappungsgrenze weichen voneinander ab. Die Kosten der empfohlenen Variante '+esc(c.name)+' werden daher getrennt gerechnet und erst am Ende zusammengeführt. Fördermittel sind in beiden Spuren abzuziehen.</div>'
+    + (c.hatHeiz?modTrackHeiz(c):'')
+    + modTrackRest(c)
+    + '<div class="mod-wf" style="margin-top:8mm">'
+    + modWfRow('Rechnerische Umlage aus beiden Spuren','Jährlich '+_eur(c.jahr)+' vor Anwendung der Kappungsgrenzen, verteilt auf '+(c.flaeche?deNum(c.flaeche,0):'—')+' m² vermietete Wohnfläche', modEurM2(c.roh)+' / m²','fin')
+    + '</div>'
+    + '<div class="note">Vor Kappung · unverbindliche wirtschaftliche Beispielrechnung · keine Rechtsberatung · Stand 2026</div>'
+    + footLine(n1,total) + '</div>';
+
+  const p2 = '<div class="page">'
+    + '<div class="ph"><div>'+kick(n1+1)+'<h2>Was tatsächlich durchsetzbar ist.</h2></div>'+objHead()+'</div>'
+    + '<div class="rule"></div>'
+    + '<div class="mod-lead">Beide Spuren haben eigene Obergrenzen. Für die Heizungsanlage gilt eine Kappung von 0,50 € je m² Wohnfläche in sechs Jahren, für die übrigen Maßnahmen 3 € je m² — bei einer Ausgangsmiete unter 7 € je m² nur 2 €. Was über der jeweiligen Grenze liegt, ist dauerhaft nicht umlegbar und kann später nicht nachgeholt werden.</div>'
+    + '<div class="sec-h mod-sec">Kappungsgrenzen im Einzelnen</div>'
+    + modSegHtml(c)
+    + '<div class="sec-h mod-sec">Ergebnis für das Gesamtgebäude</div>'
+    + '<div class="mod-kpi">'
+    + '<div class="mod-k"><div class="kl">Umlage je m² · Monat</div><div class="kv">'+modEurM2(c.zul)+'</div><div class="ks">'+(c.gekappt?'gewichtet, gekappt von '+modEurM2(c.roh):'ohne Kappung')+'</div></div>'
+    + '<div class="mod-k"><div class="kl">Mehreinnahme pro Jahr</div><div class="kv">'+_eur(c.mehr)+'</div><div class="ks">gesamtes Gebäude, dauerhaft</div></div>'
+    + '<div class="mod-k"><div class="kl">Neue Durchschnittsmiete</div><div class="kv">'+(c.miete?modEurM2(c.miete+c.zul):'—')+'</div><div class="ks">'+(c.miete?'bisher '+modEurM2(c.miete)+' / m² kalt':'Durchschnittsmiete nicht erfasst')+'</div></div>'
+    + '<div class="mod-k"><div class="kl">Amortisation Eigenanteil</div><div class="kv">'+(c.amort?deNum(c.amort,1)+' J.':'—')+'</div><div class="ks">'+(c.eigen?_eur(c.eigen)+' nach Förderung':'')+'</div></div>'
+    + '</div>'
+    + (c.hatHeiz?'<div class="doc-cap-note"><b>Hinweis zur 0,50-€-Grenze:</b> Wir wenden die besondere Kappungsgrenze des § 559e Abs. 3 BGB auf den Heizungsanteil an, unabhängig davon, ob die Erhöhung auf § 559 oder auf § 559e BGB gestützt wird. Die Rechtsansicht dazu ist nicht einheitlich; teilweise wird die Grenze nur für die Umlage nach § 559e BGB angenommen. Wir rechnen bewusst konservativ. Wird der Heizungstausch mit einer Modernisierung der Gebäudehülle verbunden, bezieht sich die Grenze nur auf den Kostenanteil der Heizungsanlage — die Trennung der Gewerke muss dann bereits in der Modernisierungsankündigung sauber angelegt sein.</div>':'')
+    + footLine(n1+1,total) + '</div>';
+
+  const p3 = '<div class="page">'
+    + '<div class="ph"><div>'+kick(n1+2)+'<h2>Ablauf, Fristen und Grenzen.</h2></div>'+objHead()+'</div>'
+    + '<div class="rule"></div>'
+    + '<div class="mod-lead">Die Umlage entsteht nicht automatisch mit der Baumaßnahme. Sie muss angekündigt, durchgeführt und schriftlich erklärt werden — Fehler in Form oder Frist machen die Erhöhung unwirksam.</div>'
+    + '<div class="sec-h mod-sec">Ablauf in vier Schritten</div>'
+    + '<div class="mod-steps">'
+    + '<div class="mod-step"><div class="sn">Schritt 1 · § 555c BGB</div><div class="st2">Modernisierungsankündigung</div><div class="sd">Spätestens drei Monate vor Baubeginn in Textform an alle betroffenen Mieter. Sie muss Art und Umfang der Maßnahmen, den voraussichtlichen Beginn und die Dauer, die zu erwartende Mieterhöhung und die künftigen Betriebskosten benennen. Heizungsanlage und übrige Gewerke sind getrennt auszuweisen.</div></div>'
+    + '<div class="mod-step"><div class="sn">Schritt 2</div><div class="st2">Durchführung der Maßnahmen</div><div class="sd">Die Mieter haben die Arbeiten zu dulden. Für die ersten drei Monate der Bauzeit ist eine Mietminderung wegen der Beeinträchtigung ausgeschlossen (§ 536 Abs. 1a BGB).</div></div>'
+    + '<div class="mod-step"><div class="sn">Schritt 3 · §§ 559b, 559e BGB</div><div class="st2">Mieterhöhungserklärung</div><div class="sd">Nach Abschluss der Maßnahmen in Textform. Die Erklärung muss die entstandenen Kosten, den abgezogenen Erhaltungsanteil und die abgezogenen Fördermittel so darstellen, dass der Mieter die Berechnung nachvollziehen kann — für Heizung und übrige Maßnahmen jeweils gesondert.</div></div>'
+    + '<div class="mod-step"><div class="sn">Schritt 4</div><div class="st2">Wirksamkeit der neuen Miete</div><div class="sd">Die erhöhte Miete ist ab Beginn des dritten Monats nach Zugang der Erklärung zu zahlen. Der Mieter kann einen Härtefalleinwand erheben (§ 559 Abs. 4 und 5 BGB).</div></div>'
+    + '</div>'
+    + '<div class="sec-h mod-sec">Was die Umlage begrenzen oder ausschließen kann</div>'
+    + '<div class="mod-hints">'
+    + '<div class="mod-hint"><dt>Kappung Heizungsanlage</dt><dd>Für den Einbau einer Heizungsanlage darf die Miete innerhalb von sechs Jahren um höchstens 0,50 € je m² Wohnfläche steigen (§ 559e Abs. 3 BGB). Der übersteigende Teil verfällt.</dd></div>'
+    + '<div class="mod-hint"><dt>Kappung übrige Maßnahmen</dt><dd>Höchstens 3 € je m² in sechs Jahren, bei einer Ausgangsmiete unter 7 € je m² höchstens 2 € (§ 559 Abs. 3a BGB). Die Grenze gilt je Mietverhältnis, weshalb die Flächenanteile getrennt betrachtet werden.</dd></div>'
+    + '<div class="mod-hint"><dt>Förderung als Voraussetzung</dt><dd>Der erhöhte Satz von '+MOD_SATZ_HEIZ+' % setzt voraus, dass für die Heizung öffentliche Fördermittel in Anspruch genommen wurden und die Anlage die Anforderungen des § 71 GEG erfüllt. Ohne Förderung bleibt es bei '+MOD_SATZ+' % nach § 559 BGB.</dd></div>'
+    + '<div class="mod-hint"><dt>Erhaltungsanteil</dt><dd>Heizung pauschal '+MOD_INSTAND_HEIZ+' % auf die um die Förderung verminderten Kosten (§ 559e Abs. 2 BGB), übrige Maßnahmen '+deNum(c.instPc,0)+' % entsprechend dem vereinfachten Verfahren nach § 559c BGB, das bis 10.000 € je Wohnung anwendbar ist.'+(instHint?' Im vorliegenden Fall liegen die Kosten mit rund '+_eur(c.proWe)+' je Wohneinheit darüber — der Erhaltungsanteil ist dann konkret zu ermitteln.':'')+'</dd></div>'
+    + '<div class="mod-hint"><dt>Preisgebundener Wohnraum</dt><dd>Bei gefördertem Wohnraum mit Miet- oder Belegungsbindung gelten die Mietobergrenzen der Förderzusage. Sie können die Umlage begrenzen oder vollständig ausschließen.</dd></div>'
+    + '<div class="mod-hint"><dt>Staffel- und Indexmieten</dt><dd>Bei vereinbarter Indexmiete ist eine Modernisierungsumlage grundsätzlich ausgeschlossen, sofern die Maßnahme nicht gesetzlich zwingend war. Gewerbeeinheiten folgen der jeweiligen vertraglichen Regelung.</dd></div>'
+    + '</div>'
+    + '<div class="fazit-disc" style="margin-top:5mm">Diese Darstellung ist eine unverbindliche wirtschaftliche Beispielrechnung auf Grundlage der uns vorliegenden Angaben und ersetzt keine rechtliche Prüfung. Die Aufteilung der Kosten auf Heizungsanlage und übrige Maßnahmen erfolgt anhand der erfassten Einzelmaßnahmen; sie ist für die Erhöhungserklärung durch Rechnungen zu belegen. Den Erhaltungsanteil setzen wir pauschal an — '+MOD_INSTAND_HEIZ+' % bei der Heizung nach § 559e Abs. 2 BGB, '+deNum(c.instPc,0)+' % bei den übrigen Maßnahmen entsprechend dem vereinfachten Verfahren nach § 559c BGB, das bis zu Kosten von 10.000 € je Wohneinheit anwendbar ist. Liegen die Kosten darüber, muss der Erhaltungsanteil konkret ermittelt und gegengerechnet werden. Diese Abgrenzung sowie die Mieterhöhungserklärung selbst sollten anwaltlich geprüft werden. Für die rechtliche Belastbarkeit der Berechnung können wir keine Gewähr übernehmen.</div>'
+    + footLine(n1+2,total) + '</div>';
+
+  return p1+p2+p3;
+}
+
 /* ---------- Dokument rendern ---------- */
 function renderDoc(){
   recalcBeg();
@@ -2093,7 +2459,7 @@ function renderDoc(){
   const active = PK().filter(p=>S.progAktiv.includes(p.id));
   const activeCmp = active.filter(p=>p.id!=='gzw'&&p.id!=='ibbsolarl'&&p.id!=='ibbco2'&&p.id!=='ibbjunges'&&!/^fkg/.test(p.id)&&!isInfoProg(p.id));
   const aktiv = id => active.some(p=>p.id===id);
-  const total = 5 + active.length*(isNB()?2:1);
+  const total = 5 + active.length*(isNB()?2:1) + (modOn()?3:0);
   const fazitN = total - 1;
   let n = 0;
   let html = '';
@@ -2270,6 +2636,9 @@ function renderDoc(){
     </div>`;
   });
 
+  /* MODERNISIERUNGSUMLAGE (Addon) */
+  if(modOn()) html += modPagesHtml(total, total-4);
+
   /* FAZIT */
   const fz = S.fazit || {};
   html += `<div class="page" data-fazit="1">
@@ -2313,6 +2682,7 @@ function renderDoc(){
   </div>`;
 
   document.getElementById('stage').innerHTML = html;
+  renderModHeizSafe();
   paginateNbMs();
   paginateFazit();
   renumberPages();
@@ -2380,6 +2750,9 @@ function paginateFazit(){
   }
   renumberPages();
 }
+function setModAktiv(v){ S.mod.aktiv=!!v; save(); renderDoc(); }
+function setModAktivUI(){ const el=document.getElementById('modAktiv'); if(el) el.checked=modOn(); }
+function renderModHeizSafe(){ try{ renderModHeiz(); }catch(e){} }
 function renumberPages(){
   const pages=[...document.querySelectorAll('#stage .page')];
   const total=pages.length;
@@ -3011,6 +3384,7 @@ renderAmpelEditors();
 refreshProjSelect();
 renderProgToggles();
 renderProgBlocks();
+setModAktivUI();
 setupImage();
 renderDoc();
 </script>
