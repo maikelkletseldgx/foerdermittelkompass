@@ -1241,7 +1241,7 @@ function fkgDetailHtml(p,d,i,total){
     ${footLine(4+i,total)}
   </div>`;
 }
-const EEK_SEL = ['GEG','EH 85','EH 70','EH 55'];
+const EEK_SEL = ['GEG','EH 160','EH 85','EH 70','EH 55'];
 function eekSelect(id, handler){
   const v=S.prog[id].eek||'';
   return `<select onchange="${handler}">${['—',...EEK_SEL].map(c=>`<option value="${c==='—'?'':c}" ${v===(c==='—'?'':c)?'selected':''}>${c}</option>`).join('')}</select>`;
