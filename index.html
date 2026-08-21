@@ -693,6 +693,7 @@ const PROGRAMME_KATALOG_NB = [
 const PROGRAMME_KATALOG_NWG = [
   {id:'beg',          name:'BEG Einzelmaßnahmen',  typ:'Direktzuschuss'},
   {id:'kfw85eegzw',   name:'KfW 85 EE (für Gewerbe zu Wohnen)', typ:'Kredit + Tilgung'},
+  {id:'kfwdenkmaleegzw', name:'KfW EH Denkmal EE (für Gewerbe zu Wohnen)', typ:'Kredit + Tilgung'},
   {id:'gzw',          name:'Gewerbe zu Wohnen',   typ:'Zusatzförderung'},
   {id:'kfwegdenkmalee', name:'KfW EG Denkmal EE', typ:'Kredit + Tilgung'},
   {id:'kfweg70ee',    name:'KfW EG 70 EE',       typ:'Kredit + Tilgung'},
@@ -1359,6 +1360,7 @@ const DEFAULT = {
     kfw40eewpb: mkKfw(40,20,true, KFW_TIER[40].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).'),
     kfwdenkmalee: mkKfw('denkmal',5,true),
     kfw85eegzw: Object.assign(mkKfw(85,0,true,'Energetisches Basisniveau für die Zusatzförderung „Gewerbe zu Wohnen" (KfW 266) — mindestens EH 85 EE muss beim Umbau von Gewerbe- zu Wohnflächen erreicht werden.'),{we:''}),
+    kfwdenkmaleegzw: Object.assign(mkKfw('denkmal',5,true,'Denkmalgerechte Sanierung im Zuge des Umbaus von Gewerbe- zu Wohnflächen. Erreicht wird der Standard EH Denkmal EE, der als energetisches Basisniveau für die Zusatzförderung „Gewerbe zu Wohnen" (KfW 266) anerkannt ist. Der Tilgungszuschuss von 5 % entspricht dem Wohngebäude-Programm KfW Denkmal EE.'), {we:''}),
     kfwegdenkmalee: mkKfw('denkmal',5,true),
     kfweg70ee:    mkKfw(70,0, true),
     kfweg70eewpb: mkKfw(70,10,true, KFW_TIER[70].lead+' Der WPB-Bonus gilt für energetisch schlechteste Gebäude (EEK F–H im Ist).'),
@@ -1716,6 +1718,12 @@ if((S._v||0) < 32){
 if(!S.mod.heiz) S.mod.heiz = {};
   S._v = 32;
 }
+// v36: KfW EH Denkmal EE (für Gewerbe zu Wohnen) im NWG-Katalog
+if((S._v||0) < 36){
+  if(!S.prog.kfwdenkmaleegzw) S.prog.kfwdenkmaleegzw = JSON.parse(JSON.stringify(DEFAULT.prog.kfwdenkmaleegzw));
+  if(S.prog.kfwdenkmaleegzw.we===undefined || S.prog.kfwdenkmaleegzw.we==='') S.prog.kfwdenkmaleegzw.we = (S.prog.gzw && S.prog.gzw.we) || '';
+  S._v = 36;
+}
 // v35: manuelle Auswahl der Heizungsmaßnahmen
 if((S._v||0) < 35){
   if(S.mod && !S.mod.heiz) S.mod.heiz = {};
@@ -1990,10 +1998,10 @@ function gzwTotalsHtml(){
 }
 window.editGzw=(k,v)=>{
   S.prog.gzw[k]=v; recalcGzw(); save();
-  if(k==='we' && S.prog.kfw85eegzw){ S.prog.kfw85eegzw.we=v; recalcKfw('kfw85eegzw'); }
+  if(k==='we'){ ['kfw85eegzw','kfwdenkmaleegzw'].forEach(pid=>{ if(S.prog[pid]){ S.prog[pid].we=v; recalcKfw(pid); } }); }
   renderDoc();
   const t=document.getElementById('gzwtot'); if(t) t.innerHTML=gzwTotalsHtml();
-  const kt=document.getElementById('kfwtot-kfw85eegzw'); if(kt) kt.innerHTML=kfwTotalsHtml('kfw85eegzw');
+  ['kfw85eegzw','kfwdenkmaleegzw'].forEach(pid=>{ const kt=document.getElementById('kfwtot-'+pid); if(kt) kt.innerHTML=kfwTotalsHtml(pid); });
 };
 const IBB_GROESSE = [
   {k:'klein',  n:'Natürliche Person · kleines Unternehmen · WEG', a:65, b:50, hint:'< 50 Mitarbeitende, Umsatz/Bilanz ≤ 10 Mio. €'},
@@ -2516,7 +2524,7 @@ function renderDoc(){
   const rows = [
     {rl:'Nötige Maßnahmen', f:p=>{ const ms=(S.prog[p.id].massnahmen||[]); return `<div class="mrow${ms.length>6?' dense':''}">${ms.map(m=>`<span class="mchip">${esc(shortMass(m.m))}</span>`).join('')}</div>`; }},
     {rl:'Erreichte Klasse', f:p=>`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].klasse)}</span><span class="cs">${esc(S.prog[p.id].klasseKwh)}</span>`},
-    {rl:'Bewertung', f:p=>p.id==='kfw85eegzw'?`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].klasse)}</span><span class="cs">${esc(S.prog[p.id].klasseKwh)}</span>`:`<span class="cmp-farb" style="background:${S.prog[p.id].farbe||'#ccc'}"></span>`},
+    {rl:'Bewertung', f:p=>isGzwBasis(p.id)?`<span class="fig${p.id===S.progRec?' fog':''}">${esc(S.prog[p.id].klasse)}</span><span class="cs">${esc(S.prog[p.id].klasseKwh)}</span>`:`<span class="cmp-farb" style="background:${S.prog[p.id].farbe||'#ccc'}"></span>`},
     {rl:'Endenergiebedarf', f:p=>dualCell(S.prog[p.id].ee,'kWh')},
     {rl:'Primärenergiebedarf', f:p=>dualCell(S.prog[p.id].pe,'kWh')},
     {rl:'CO₂-Emissionen', f:p=>dualCell(S.prog[p.id].co2,'kg')},
@@ -2560,7 +2568,7 @@ function renderDoc(){
     const kaskSum = d.netto;
     html += `<div class="page">
       <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)}${isRec?' · Empfehlung':''}</div><h2>${esc(isBeg(p.id)?begName(p.id):p.name)}.</h2></div>
-        <div class="obj"><b>${esc(p.typ)}</b><br>${esc(p.name)}${(isNWG()&&p.id!=='kfw85eegzw')?`<br>Bewertung <span class="farb-chip" style="background:${d.farbe||'#ccc'}"></span>`:`<br>Ziel Klasse ${esc(d.klasse)}`}</div></div>
+        <div class="obj"><b>${esc(p.typ)}</b><br>${esc(p.name)}${(isNWG()&&!isGzwBasis(p.id))?`<br>Bewertung <span class="farb-chip" style="background:${d.farbe||'#ccc'}"></span>`:`<br>Ziel Klasse ${esc(d.klasse)}`}</div></div>
       <div class="rule"></div>
       <div class="d-lead">${esc(d.lead)}</div>
       <div class="sec-h">Energiebilanz nach Sanierung</div>
@@ -2584,14 +2592,14 @@ function renderDoc(){
             ? `<div class="doc-cap-note"><b>Förderfähige Kosten (Nichtwohngebäude):</b> Bei BEG Einzelmaßnahmen gelten nutzungsabhängige Höchstgrenzen je m² NGF — Richtwert Gebäudehülle ${esc(S.obj.begCapM2)} €/m² NGF (≈ ${_eur(_num(S.obj.begCapM2)*_qm())} bei ${esc(S.obj.qm)} m² NGF). Die förderfähigen Kosten für die Heizung werden individuell ermittelt.</div>`
             : ''):''}
           <div class="d-res">
-            ${p.id==='kfw85eegzw'
+            ${isGzwBasis(p.id)
               ? `<div class="rc${isRec?' hl':''}"><div class="rl2">Investition je entstandener WE</div><div class="rv">${_num(d.we)?_eur(Math.round(_num(d.invest)/_num(d.we))):'—'}</div></div>`
               : isNWG()
               ? `<div class="rc${isRec?' hl':''}"><div class="rl2">Investition je m² NGF</div><div class="rv">${_qm()?_eur(Math.round(_num(d.invest)/_qm())):'—'}</div></div>`
               : `<div class="rc${isRec?' hl':''}"><div class="rl2">Erreichte Klasse</div><div class="rv">${esc(d.klasse)}</div></div>`}
             <div class="rc"><div class="rl2">CO₂-Reduktion</div><div class="rv">${esc(d.co2Red)}</div></div>
           </div>
-          ${(isNWG()&&p.id!=='kfw85eegzw')?'':`<div class="d-eek-mini">
+          ${(isNWG()&&!isGzwBasis(p.id))?'':`<div class="d-eek-mini">
             ${eekBar(S.ist.eekIst,d.klasse,22)}
             <div class="eek-cap"><span class="f">${esc(S.ist.eekIst)}</span><span class="arr">→</span><span class="t">${esc(d.klasse)}</span><span style="color:var(--steel)">· Zielklasse</span></div>
           </div>`}
@@ -2618,6 +2626,8 @@ function renderDoc(){
       ${!isBeg(p.id)?(()=>{ const perWE=kfwMaxWE(p.id), we=_num(S.obj.we)||0, tot=perWE*we; const capTot=Math.min(NWG_EG_M2_CAP*_qm(), NWG_EG_ABS_CAP);
         const info = p.id==='kfw85eegzw'
           ? `Um den Standard KfW 85 EE zu erreichen, gibt es von der KfW-Bank <b>keinen Tilgungszuschuss</b> auf den Kredit. Wir empfehlen daher, die nötigen Maßnahmen über die <b>BEG Einzelmaßnahmen</b> fördern zu lassen — die dafür erreichbare Förderung haben wir oben bei den Maßnahmen bereits für Sie kalkuliert.`
+          : p.id==='kfwdenkmaleegzw'
+          ? `Der maximale Förderkredit (KfW 261) beträgt <b>${_eur(KFW_MAXWE)} pro entstehender Wohneinheit</b>${_num(d.we)?` — bei ${deNum(_num(d.we),0)} WE bis zu ${_eur(KFW_MAXWE*_num(d.we))}`:''}, der Tilgungszuschuss <b>5 %</b>. Hinzu kommt der Zinsvorteil des KfW-Kredits ab rund 2 % effektivem Jahreszins. EH Denkmal EE erfüllt zugleich die energetische Voraussetzung der Zusatzförderung „Gewerbe zu Wohnen" (KfW 266).`
           : isNWG()
           ? `Bei Nichtwohngebäuden gelten die maximal förderfähigen Kredit-/Investitionskosten von <b>${deNum(NWG_EG_M2_CAP,0)} €/m² NGF</b>, gedeckelt auf max. <b>10 Mio. €</b>${_qm()?` (≈ ${_eur(capTot)} bei ${esc(S.obj.qm)} m² NGF)`:''}.`
           : `Der maximale Förderkredit (KfW 261) beträgt bei ${esc(p.name)} <b>${_eur(perWE)} pro Wohneinheit</b>${we?` — bei ${esc(S.obj.we)} WE bis zu ${_eur(tot)}`:''}.`;
@@ -2628,7 +2638,7 @@ function renderDoc(){
         </div>
         <a class="isfp-btn" href="${kfwMailto(p)}">Beratung anfragen →</a>
       </div>`; })():''}
-      ${(!isBeg(p.id)&&p.id!=='kfw85eegzw')?(()=>{ const inv=_num(d.invest); if(!inv) return '';
+      ${(!isBeg(p.id)&&!isGzwBasis(p.id))?(()=>{ const inv=_num(d.invest); if(!inv) return '';
         const annuity=(rate,years,principal)=>{ const r=rate/100/12, n=years*12; const pay=r===0?principal/n:principal*r/(1-Math.pow(1+r,-n)); return pay*n; };
         const kfwCost=annuity(2,10,inv), marktCost=annuity(4.5,10,inv), diff=marktCost-kfwCost;
         return `<div class="doc-cap-note"><b>Zinsvorteil KfW-Kredit:</b> Über die KfW profitieren Sie zusätzlich zum Tilgungszuschuss von deutlich günstigeren Krediten — schon ab rund 2 % effektivem Jahreszins. Bei ${_eur(inv)} Kreditsumme und 10 Jahren Laufzeit: Gesamtkosten (Zins &amp; Tilgung) bei 2 % KfW-Zins ≈ ${_eur(kfwCost)}, bei einem marktüblichen Sanierungskredit von 4,5 % ≈ ${_eur(marktCost)} — ein Zinsvorteil von rund <b>${_eur(diff)}</b> über die Laufzeit. <a href="${KFW_LINK}" target="_blank" rel="noopener">Aktuelle Zinsen ansehen →</a></div>`; })():''}
@@ -2951,7 +2961,7 @@ function renderProgBlocks(){
         <div class="fld"><label>Klasse-Zusatz</label><input value="${esc(d.klasseKwh)}" oninput="editProg('${p.id}','klasseKwh',this.value)"></div>
       </div>
       <div class="fld"><label>KfW EH Standard <span class="rec-lab">Variantenvergleich</span></label>${eekSelect(p.id, `editProg('${p.id}','eek',this.value)`)}</div>
-      ${(isNWG()&&p.id!=='kfw85eegzw')?`<div class="fld"><label>Bewertung (Farbe)</label><div class="farb-sw">${NWG_FARBEN.map(c=>`<span class="${c===d.farbe?'sel':''}" style="background:${c}" onclick="setProgFarbe('${p.id}','${c}')"></span>`).join('')}</div></div>`:''}
+      ${(isNWG()&&!isGzwBasis(p.id))?`<div class="fld"><label>Bewertung (Farbe)</label><div class="farb-sw">${NWG_FARBEN.map(c=>`<span class="${c===d.farbe?'sel':''}" style="background:${c}" onclick="setProgFarbe('${p.id}','${c}')"></span>`).join('')}</div></div>`:''}
       <div class="row3">
         <div class="fld"><label>Primär kWh/m²a</label><input value="${esc(d.pe||'')}" oninput="editProg('${p.id}','pe',this.value)"></div>
         <div class="fld"><label>End kWh/m²a</label><input value="${esc(d.ee||'')}" oninput="editProg('${p.id}','ee',this.value)"></div>
@@ -2961,7 +2971,7 @@ function renderProgBlocks(){
         <div class="fld"><label>Investition € <span class="rec-lab">Summe Maßnahmen</span></label><input id="kfwinv-${p.id}" value="${esc(d.invest)}" disabled style="opacity:.7"></div>
         <div class="fld"><label>Tilgungszuschuss %</label><input value="${esc(d.satz||'')}" oninput="editKfw('${p.id}','satz',this.value)"></div>
       </div>
-      ${p.id==='kfw85eegzw'?`<div class="fld"><label>Neu entstehende Wohneinheiten <span class="rec-lab">synchron mit Gewerbe zu Wohnen</span></label><input value="${esc(d.we)}" oninput="editKfw('${p.id}','we',this.value)"></div>`:''}
+      ${isGzwBasis(p.id)?`<div class="fld"><label>Neu entstehende Wohneinheiten <span class="rec-lab">synchron mit Gewerbe zu Wohnen</span></label><input value="${esc(d.we)}" oninput="editKfw('${p.id}','we',this.value)"></div>`:''}
       <div class="beg-totals" id="kfwtot-${p.id}">${kfwTotalsHtml(p.id)}</div>
       <div class="row2">
         <div class="fld"><label>CO₂-Red.</label><input value="${esc(d.co2Red)}" oninput="editProg('${p.id}','co2Red',this.value)"></div>
@@ -2991,6 +3001,8 @@ function begMailtoNwg(){
 }
 const KFW_LINK = 'https://www.kfw.de/inlandsfoerderung/Privatpersonen/Bestehende-Immobilie/F%C3%B6rderprodukte/Bundesf%C3%B6rderung-f%C3%BCr-effiziente-Geb%C3%A4ude-Wohngeb%C3%A4ude-Kredit-(261-262)/';
 function kfwMaxWE(id){ return KFW_MAXWE; }
+/* Gewerbe-zu-Wohnen-Basisprogramme: Bewertung und Kostenrahmen folgen dem Wohngebäude */
+function isGzwBasis(id){ return id==='kfw85eegzw' || id==='kfwdenkmaleegzw'; }
 function kfwMailto(p){
   const adr = [S.obj.adresse, S.obj.plzort].filter(Boolean).join(', ');
   const subj = `Begleitung KfW-Effizienzhaus – ${p.name}`;
@@ -3132,7 +3144,8 @@ function recalcKfw(id){
   }
   d.kask = [ {l:'Investition', v:_eur(inv)} ];
   if(c.excluded>0.5) d.kask.push({l:'davon nicht förderfähig', v:'− '+_eur(c.excluded)});
-  if(isNWG() && c.base>c.cap) d.kask.push({l:`Förderfähig · max. ${deNum(NWG_EG_M2_CAP,0)} €/m² NGF`, v:_eur(c.ff)});
+  if(id==='kfwdenkmaleegzw'){ if(c.base>c.cap) d.kask.push({l:`Förderfähig · max. ${_eur(KFW_MAXWE)}/WE`, v:_eur(c.ff)}); }
+  else if(isNWG() && c.base>c.cap) d.kask.push({l:`Förderfähig · max. ${deNum(NWG_EG_M2_CAP,0)} €/m² NGF`, v:_eur(c.ff)});
   if(id==='kfw85eegzw'){
     const bg=kfwGzwBegCalc();
     d.kask.push({l:'Förderung', v:'− '+_eur(bg.totalFoe), pos:true});
@@ -3147,7 +3160,8 @@ function kfwCalc(id){
   const inv = priced ? sum : _num(d.invest);
   const base = priced ? foeBase : inv;
   const satz=_num(d.satz);
-  const cap = isNWG() ? Math.min(NWG_EG_M2_CAP*_qm(), NWG_EG_ABS_CAP) : Infinity;
+  const cap = id==='kfwdenkmaleegzw' ? KFW_MAXWE*(_num(d.we)||1)
+            : isNWG() ? Math.min(NWG_EG_M2_CAP*_qm(), NWG_EG_ABS_CAP) : Infinity;
   const ff = (cap && base>cap) ? cap : base;
   return { inv, base, ff, satz, cap, foe: ff*satz/100, excluded: inv-base };
 }
@@ -3156,7 +3170,8 @@ function kfwTotalsHtml(id){
   const c = kfwCalc(id);
   let rows=`<div class="beg-tot-row"><span>Investition</span><b>${c.inv?_eur(c.inv):'—'}</b></div>`;
   if(c.excluded>0.5) rows+=`<div class="beg-tot-row"><span>davon nicht förderfähig</span><b>− ${_eur(c.excluded)}</b></div>`;
-  if(isNWG() && c.base>c.cap) rows+=`<div class="beg-tot-row cap"><span>Förderfähig · max. ${deNum(NWG_EG_M2_CAP,0)} €/m² NGF</span><b>${_eur(c.ff)}</b></div>`;
+  if(id==='kfwdenkmaleegzw'){ if(c.base>c.cap) rows+=`<div class="beg-tot-row cap"><span>Förderfähig · max. ${_eur(KFW_MAXWE)}/WE · ${deNum(_num(S.prog[id].we)||1,0)} WE</span><b>${_eur(c.ff)}</b></div>`; }
+  else if(isNWG() && c.base>c.cap) rows+=`<div class="beg-tot-row cap"><span>Förderfähig · max. ${deNum(NWG_EG_M2_CAP,0)} €/m² NGF</span><b>${_eur(c.ff)}</b></div>`;
   if(id==='kfw85eegzw'){ const bg=kfwGzwBegCalc(); rows+=`<div class="beg-tot-row nowrap"><span>Förderung</span><b class="pos">− ${_eur(bg.totalFoe)}</b></div>`; }
   else rows+=`<div class="beg-tot-row"><span>Förderung · Tilgungszuschuss ${deNum(c.satz, c.satz%1?1:0)} %</span><b class="pos">− ${_eur(c.foe)}</b></div>`;
   if(!isNWG()) rows+=`<div class="beg-tot-row"><span>Investition je WE</span><b>${c.inv?_eur(Math.round(c.inv/we/100)*100):'—'}</b></div>`;
@@ -3165,7 +3180,12 @@ function kfwTotalsHtml(id){
 }
 window.editKfw=(id,k,v)=>{
   S.prog[id][k]=v; recalcKfw(id); save();
-  if(id==='kfw85eegzw' && k==='we'){ S.prog.gzw.we=v; recalcGzw(); const gt=document.getElementById('gzwtot'); if(gt) gt.innerHTML=gzwTotalsHtml(); }
+  if(isGzwBasis(id) && k==='we'){
+    S.prog.gzw.we=v; recalcGzw();
+    const other = id==='kfw85eegzw' ? 'kfwdenkmaleegzw' : 'kfw85eegzw';
+    if(S.prog[other]){ S.prog[other].we=v; recalcKfw(other); const ot=document.getElementById('kfwtot-'+other); if(ot) ot.innerHTML=kfwTotalsHtml(other); }
+    const gt=document.getElementById('gzwtot'); if(gt) gt.innerHTML=gzwTotalsHtml();
+  }
   renderDoc();
   const ms=document.getElementById('ms-'+id); if(ms) ms.innerHTML=renderMsEditor(id);
   refreshKfwCalc(id);
