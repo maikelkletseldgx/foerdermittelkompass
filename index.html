@@ -382,6 +382,11 @@
   .ms-badge.req{ background:var(--fog); color:var(--fog-deep) }
   .ms-badge.opt{ background:var(--cloud-2); color:var(--steel) }
   .kask{ background:var(--white); border:1px solid var(--line); border-radius:12px; padding:20px 22px; margin-bottom:6mm }
+  .page[data-kfwms] .kask-row{ padding-top:6px; padding-bottom:6px }
+  .page[data-kfwms] .kask-row .kl{ line-height:1.3 }
+  .page[data-kfwms] .d-lead{ margin-bottom:6mm }
+  .page[data-kfwms] .isfp{ padding-top:14px; padding-bottom:14px }
+  .page[data-kfwms] .isfp-txt p{ margin-bottom:0 }
   .kask-row{ display:flex; justify-content:space-between; align-items:baseline; padding:11px 0; border-top:1px solid var(--line-soft); gap:10px; flex-wrap:nowrap }
   .kask-row .kl{ white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis }
   .kask-row .kv{ white-space:nowrap; flex-shrink:0 }
@@ -622,7 +627,7 @@
 const EEK = ['A','B','C','D','E','F','G','H'];
 const NWG_FARBEN = ['#00A651','#5FAD31','#B1CC40','#F9E11E','#F6A623','#E98016','#D9483A','#B93027'];
 const MASSNAHMEN = [
-  'Fassadendämmung (WDVS)','Dachdämmung','Obergeschossdecke (OGD)','Fenster-/Türaustausch','Kellerdeckendämmung',
+  'Außenwanddämmung','Dachdämmung','Obergeschossdecke (OGD)','Fenster-/Türaustausch','Kellerdeckendämmung',
   'Heizungstausch Wärmepumpe','Fernwärmeanschluss','Lüftung mit Wärmerückgewinnung',
   'Photovoltaik-Anlage','Heizungsoptimierung (Effizienzverbesserung)','Heizungsoptimierung (Emissionsminderung)','Vollständige Hüllsanierung',
   'Beleuchtung (LED-Umrüstung)','Kühlung / Klimatechnik','Gebäudeautomation / Smart Building'
@@ -1275,7 +1280,7 @@ const KFW_TIER = {
        ms:ee=>[ {m:'Dachdämmung',b:'req',note:'U ≤ 0,14 W/m²K',invest:'40.000'},{m:'Obergeschossdecke (OGD)',b:'req',note:'U ≤ 0,14 W/m²K',invest:'22.000'},{m:'Fenster-/Türaustausch',b:'req',note:'3-fach, Ug ≤ 0,60 W/m²K',invest:'148.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 3,5',invest:'210.000'} ] },
   70:{ klasse:'B', kwh:'68 kWh/m²a', invest:508000, co2Red:'−72 %', co2Rest:'13 t Rest', pe:'68', ee:'88', co2:'9',
        lead:'Vollständige Hüllsanierung auf Effizienzhaus-70-Niveau mit erneuerbarer Wärme. Der ausgewogene Weg mit klarem Klassensprung.',
-       ms:ee=>[ {m:'Fassadendämmung (WDVS)',b:'req',note:'U ≤ 0,20 W/m²K',invest:'156.000'},{m:'Dachdämmung',b:'req',note:'U ≤ 0,14 W/m²K',invest:'40.000'},{m:'Obergeschossdecke (OGD)',b:'req',note:'U ≤ 0,14 W/m²K',invest:'22.000'},{m:'Fenster-/Türaustausch',b:'req',note:'3-fach, Ug ≤ 0,60 W/m²K',invest:'148.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 3,5',invest:'110.000'},{m:'Kellerdeckendämmung',b:'req',note:'Unterseite 10 cm',invest:'32.000'} ] },
+       ms:ee=>[ {m:'Außenwanddämmung',b:'req',note:'U ≤ 0,20 W/m²K',invest:'156.000'},{m:'Dachdämmung',b:'req',note:'U ≤ 0,14 W/m²K',invest:'40.000'},{m:'Obergeschossdecke (OGD)',b:'req',note:'U ≤ 0,14 W/m²K',invest:'22.000'},{m:'Fenster-/Türaustausch',b:'req',note:'3-fach, Ug ≤ 0,60 W/m²K',invest:'148.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 3,5',invest:'110.000'},{m:'Kellerdeckendämmung',b:'req',note:'Unterseite 10 cm',invest:'32.000'} ] },
   55:{ klasse:'A', kwh:'48 kWh/m²a', invest:690000, co2Red:'−84 %', co2Rest:'7 t Rest', pe:'48', ee:'64', co2:'5',
        lead:'Höchstes Effizienzniveau mit maximaler Förderung. Vollsanierung inklusive Lüftung und Photovoltaik für die beste CO₂-Bilanz.',
        ms:ee=>[ {m:'Vollständige Hüllsanierung',b:'req',note:'Fassade, Dach, Fenster, Keller',invest:'398.000'},{m:'Heizungstausch Wärmepumpe',b:'req',note:ee?'Luft-Wasser · ≥ 65 % erneuerbar':'Luft-Wasser, JAZ ≥ 4,0',invest:'130.000'},{m:'Lüftung mit Wärmerückgewinnung',b:'req',note:'zentral, WRG ≥ 80 %',invest:'92.000'},{m:'Photovoltaik-Anlage',b:'req',note:'Dachbelegung ca. 45 kWp',invest:'70.000',noFoe:true} ] },
@@ -1331,7 +1336,7 @@ const DEFAULT = {
     nb40qng: mkNb('40qng'),
     beg:{ klasse:'C', klasseKwh:'110 kWh/m²a', invest:'', investWE:'', foerderung:'', foerderNote:'', netto:'', co2Red:'−38 %', co2Rest:'29 t Rest', pe:'110', ee:'132', co2:'21',
         lead:'Einzelne Maßnahmen ohne Gesamtstandard. Schnell und flexibel umsetzbar, mit direktem Zuschuss je Maßnahme, aber begrenzter Effizienzwirkung.',
-        massnahmen:[ {m:'Fassadendämmung (WDVS)',b:'req',note:'U ≤ 0,20 W/m²K',invest:'156.000',satz:'20'},{m:'Dachdämmung',b:'req',note:'U ≤ 0,14 W/m²K',invest:'40.000',satz:'20'},{m:'Obergeschossdecke (OGD)',b:'req',note:'U ≤ 0,14 W/m²K',invest:'22.000',satz:'20'},{m:'Fensteraustausch',b:'req',note:'3-fach, Ug ≤ 0,60 W/m²K',invest:'88.000',satz:'20'},{m:'Heizungstausch Wärmepumpe',b:'req',note:'Luft-Wasser, JAZ ≥ 3,5',invest:'148.000',satz:'30',heiz:true} ],
+        massnahmen:[ {m:'Außenwanddämmung',b:'req',note:'U ≤ 0,20 W/m²K',invest:'156.000',satz:'20'},{m:'Dachdämmung',b:'req',note:'U ≤ 0,14 W/m²K',invest:'40.000',satz:'20'},{m:'Obergeschossdecke (OGD)',b:'req',note:'U ≤ 0,14 W/m²K',invest:'22.000',satz:'20'},{m:'Fensteraustausch',b:'req',note:'3-fach, Ug ≤ 0,60 W/m²K',invest:'88.000',satz:'20'},{m:'Heizungstausch Wärmepumpe',b:'req',note:'Luft-Wasser, JAZ ≥ 3,5',invest:'148.000',satz:'30',heiz:true} ],
         kask:[] },
     gzw:{ we:'', investWe:'100.000', invest:'', foerderung:'', netto:'', kask:[],
         lead:'Direktzuschuss für den Umbau von Gewerbe- oder anderen Nichtwohnflächen zu neuem Wohnraum (KfW 266). Voraussetzung ist mindestens das energetische Niveau Effizienzhaus 85 EE (bzw. EH Denkmal EE für erhaltenswerte Bausubstanz).' },
@@ -1718,6 +1723,14 @@ if((S._v||0) < 32){
   if(!S.mod) S.mod = JSON.parse(JSON.stringify(DEFAULT.mod));
 if(!S.mod.heiz) S.mod.heiz = {};
   S._v = 32;
+}
+// v37: Maßnahme "Fassadendämmung (WDVS)" heißt jetzt "Außenwanddämmung"
+if((S._v||0) < 37){
+  Object.keys(S.prog||{}).forEach(pid=>{
+    const arr = S.prog[pid] && (S.prog[pid].massnahmen || S.prog[pid].ms);
+    if(Array.isArray(arr)) arr.forEach(m=>{ if(m && m.m==='Fassadendämmung (WDVS)') m.m='Außenwanddämmung'; });
+  });
+  S._v = 37;
 }
 // v36: KfW EH Denkmal EE (für Gewerbe zu Wohnen) im NWG-Katalog
 if((S._v||0) < 36){
@@ -2567,8 +2580,9 @@ function renderDoc(){
     if(isNB()){ html += nbDetailHtml(p,d,i,total); return; }    if(isInfoProg(p.id)){ html += infoDetailHtml(p,d,i,total); return; }
     const isRec = p.id===S.progRec;
     const kaskSum = p.id==='kfwdenkmaleegzw' ? (()=>{ const o=kfwOderCalc(p.id); return _eur(o.kfwNetto)+'  /  '+_eur(o.begNetto); })() : d.netto;
-    html += `<div class="page">
-      <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)}${isRec?' · Empfehlung':''}</div><h2>${esc(isBeg(p.id)?begName(p.id):p.name)}.</h2></div>
+    const kickS = `03 · Szenario ${String.fromCharCode(65+i)}${isRec?' · Empfehlung':''}`;
+    html += `<div class="page" data-kfwms="1" data-kfwkick="${esc(kickS)}" data-kfwtitle="${esc(isBeg(p.id)?begName(p.id):p.name)}">
+      <div class="ph"><div><div class="kick">${kickS}</div><h2>${esc(isBeg(p.id)?begName(p.id):p.name)}.</h2></div>
         <div class="obj"><b>${esc(p.typ)}</b><br>${esc(p.name)}${(isNWG()&&!isGzwBasis(p.id))?`<br>Bewertung <span class="farb-chip" style="background:${d.farbe||'#ccc'}"></span>`:`<br>Ziel Klasse ${esc(d.klasse)}`}</div></div>
       <div class="rule"></div>
       <div class="d-lead">${esc(d.lead)}</div>
@@ -2581,7 +2595,7 @@ function renderDoc(){
       <div class="d-grid">
         <div>
           <div class="sec-h">Nötige Maßnahmen</div>
-          ${(()=>{ const begPc = (isBeg(p.id) && !isNWG()) ? begPoolCalc(p.id) : null; const gzwPc = isGzwBasis(p.id) ? begPoolCalcFor(d.massnahmen,_num(d.we)||1) : null; return (d.massnahmen||[]).map((m,idx)=>{ let priceHtml=''; if(p.id==='beg'){ const c=begMeasureCalc(m,begPc); if(c.invest){ if(c.noFoe){ priceHtml=`<div class="ms-note price">${_eur(c.invest)} · <span class="ms-cap">nicht förderfähig</span></div>`; } else { const ffNote = Math.abs(c.ff-c.invest)>1 ? ` · förderfähig ${_eur(c.ff)}` : ''; priceHtml=`<div class="ms-note price">${_eur(c.invest)}${ffNote} · ${deNum(c.satz,c.satz%1?1:0)} % = ${_eur(c.foe)} Förderung</div>`; } } } else if(p.id==='kfwdenkmaleegzw'){ const i=_num(m.invest); const topf=m.custom?'frei':begTopfFor(m.m); const kSatz=_num(d.satz); const noFoe=m.noFoe||nichtFoerderfaehig(m,p.id);
+          <div data-kfwmslist>${(()=>{ const begPc = (isBeg(p.id) && !isNWG()) ? begPoolCalc(p.id) : null; const gzwPc = isGzwBasis(p.id) ? begPoolCalcFor(d.massnahmen,_num(d.we)||1) : null; return (d.massnahmen||[]).map((m,idx)=>{ let priceHtml=''; if(p.id==='beg'){ const c=begMeasureCalc(m,begPc); if(c.invest){ if(c.noFoe){ priceHtml=`<div class="ms-note price">${_eur(c.invest)} · <span class="ms-cap">nicht förderfähig</span></div>`; } else { const ffNote = Math.abs(c.ff-c.invest)>1 ? ` · förderfähig ${_eur(c.ff)}` : ''; priceHtml=`<div class="ms-note price">${_eur(c.invest)}${ffNote} · ${deNum(c.satz,c.satz%1?1:0)} % = ${_eur(c.foe)} Förderung</div>`; } } } else if(p.id==='kfwdenkmaleegzw'){ const i=_num(m.invest); const topf=m.custom?'frei':begTopfFor(m.m); const kSatz=_num(d.satz); const noFoe=m.noFoe||nichtFoerderfaehig(m,p.id);
               if(!i){ priceHtml=''; }
               else if(noFoe){ priceHtml=`<div class="ms-note price">${_eur(i)} · <span class="ms-cap">nicht förderfähig</span></div>`; }
               else { const kFoe=i*kSatz/100; let bSatz=0,bFoe=0;
@@ -2589,7 +2603,7 @@ function renderDoc(){
                 else if(topf==='heiztausch'){ const ff=Math.min(i,heatCap(_num(d.we)||1)); bSatz=30; bFoe=ff*0.30; }
                 const bTxt = bFoe>0 ? `B ${deNum(bSatz,bSatz%1?1:0)} % = ${_eur(bFoe)}` : 'B <span class="ms-cap">nicht förderfähig</span>';
                 priceHtml=`<div class="ms-note price">${_eur(i)} · A ${deNum(kSatz,kSatz%1?1:0)} % = ${_eur(kFoe)} <span class="ms-oder">oder</span> ${bTxt}</div>`; }
-            } else if(p.id==='kfw85eegzw'){ const topf=m.custom?'frei':begTopfFor(m.m); const i=_num(m.invest); if(nichtFoerderfaehig(m,'kfw85eegzw')){ priceHtml=i?`<div class="ms-note price">${_eur(i)} · <span class="ms-cap">nicht förderfähig</span></div>`:''; } else { let foe=0, satz=0; if(topf==='pool15'){ const share=gzwPc.gesamt>0?i/gzwPc.gesamt:0; foe=gzwPc.foe*share; satz=gzwPc.gesamt>0?(gzwPc.foe/gzwPc.gesamt*100):15; } else if(topf==='heiztausch'){ const ff=Math.min(i,heatCap(_num(d.we)||1)); satz=30; foe=ff*0.30; } priceHtml=i?`<div class="ms-note price">${_eur(i)} · ${deNum(satz,satz%1?1:0)} % = ${_eur(foe)} Förderung aus BEG EM</div>`:''; } } else { const mSatz=_num(d.satz); const noFoe=m.noFoe||nichtFoerderfaehig(m,p.id); const foe=_num(m.invest)*mSatz/100; priceHtml=_num(m.invest)?`<div class="ms-note price">${noFoe?`${_eur(_num(m.invest))} · <span class="ms-cap">nicht förderfähig</span>`:`${_eur(_num(m.invest))} · ${deNum(mSatz,mSatz%1?1:0)} % = ${_eur(foe)} Förderung`}</div>`:''; } return `<div class="ms"><div class="ms-n">M${idx+1}</div><div><div class="ms-name">${esc(m.m)} <span class="ms-badge ${m.b}">${m.b==='req'?'Voraussetzung':'Optional'}</span></div>${m.note?`<div class="ms-note">${esc(m.note)}</div>`:''}${priceHtml}</div></div>`; }).join(''); })()}
+            } else if(p.id==='kfw85eegzw'){ const topf=m.custom?'frei':begTopfFor(m.m); const i=_num(m.invest); if(nichtFoerderfaehig(m,'kfw85eegzw')){ priceHtml=i?`<div class="ms-note price">${_eur(i)} · <span class="ms-cap">nicht förderfähig</span></div>`:''; } else { let foe=0, satz=0; if(topf==='pool15'){ const share=gzwPc.gesamt>0?i/gzwPc.gesamt:0; foe=gzwPc.foe*share; satz=gzwPc.gesamt>0?(gzwPc.foe/gzwPc.gesamt*100):15; } else if(topf==='heiztausch'){ const ff=Math.min(i,heatCap(_num(d.we)||1)); satz=30; foe=ff*0.30; } priceHtml=i?`<div class="ms-note price">${_eur(i)} · ${deNum(satz,satz%1?1:0)} % = ${_eur(foe)} Förderung aus BEG EM</div>`:''; } } else { const mSatz=_num(d.satz); const noFoe=m.noFoe||nichtFoerderfaehig(m,p.id); const foe=_num(m.invest)*mSatz/100; priceHtml=_num(m.invest)?`<div class="ms-note price">${noFoe?`${_eur(_num(m.invest))} · <span class="ms-cap">nicht förderfähig</span>`:`${_eur(_num(m.invest))} · ${deNum(mSatz,mSatz%1?1:0)} % = ${_eur(foe)} Förderung`}</div>`:''; } return `<div class="ms"><div class="ms-n">M${idx+1}</div><div><div class="ms-name">${esc(m.m)} <span class="ms-badge ${m.b}">${m.b==='req'?'Voraussetzung':'Optional'}</span></div>${m.note?`<div class="ms-note">${esc(m.note)}</div>`:''}${priceHtml}</div></div>`; }).join(''); })()}</div>
         </div>
         <div>
           <div class="sec-h">Förderrechnung</div>
@@ -2703,6 +2717,7 @@ function renderDoc(){
   document.getElementById('stage').innerHTML = html;
   renderModHeizSafe();
   paginateNbMs();
+  paginateKfwMs();
   paginateFazit();
   renumberPages();
 }
@@ -2732,6 +2747,42 @@ function paginateNbMs(){
       const f=document.createElement('div'); f.className='foot';
       f.innerHTML=`<span>DGX · Fördermittelkompass · ${esc(S.obj.adresse)}</span><span></span>`;
       next.appendChild(f);
+    }
+  });
+}
+/* Maßnahmenliste der Szenarioseiten umbrechen, wenn sie nicht auf die Seite passt */
+function paginateKfwMs(){
+  const stage=document.getElementById('stage');
+  const pages=[...stage.querySelectorAll('.page[data-kfwms]')];
+  if(!pages.length) return;
+  const probe=document.createElement('div');
+  probe.style.cssText='position:absolute;height:297mm;visibility:hidden;pointer-events:none';
+  stage.appendChild(probe); const A4=probe.offsetHeight; probe.remove();
+  if(!A4) return;
+  pages.forEach(pg=>{
+    if(pg.offsetHeight<=A4+1) return;
+    const list=pg.querySelector('[data-kfwmslist]'); if(!list) return;
+    let next=null, guard=0;
+    while(pg.offsetHeight>A4+1 && list.children.length>1 && guard++<60){
+      if(!next){
+        next=document.createElement('div');
+        next.className='page';
+        next.innerHTML=`<div class="ph"><div><div class="kick">${esc(pg.dataset.kfwkick||'')} · Fortsetzung</div><h2>${esc(pg.dataset.kfwtitle||'')} — Maßnahmen.</h2></div>${objHead()}</div><div class="rule"></div><div class="sec-h">Nötige Maßnahmen · Fortsetzung</div><div class="nb-ms-cont" data-kfwcont></div>`;
+        pg.insertAdjacentElement('afterend',next);
+      }
+      const cont=next.querySelector('[data-kfwcont]');
+      const vorher=pg.offsetHeight, el=list.lastElementChild;
+      cont.insertBefore(el, cont.firstChild);
+      /* Wenn die rechte Spalte die Seitenhöhe bestimmt, bringt weiteres Verschieben nichts */
+      if(pg.offsetHeight>=vorher){ list.appendChild(el); break; }
+    }
+    if(next){
+      if(!next.querySelector('[data-kfwcont]').children.length){ next.remove(); }
+      else {
+        const f=document.createElement('div'); f.className='foot';
+        f.innerHTML=`<span>DGX · Fördermittelkompass · ${esc(S.obj.adresse)}</span><span></span>`;
+        next.appendChild(f);
+      }
     }
   });
 }
@@ -2816,7 +2867,7 @@ function nbVorhabenHtml(total){
   </div>`;
 }
 function pctDelta(a,b){ const na=parseFloat(String(a).replace(/[^\d,.-]/g,'').replace('.','').replace(',','.')); const nb=parseFloat(String(b).replace(/[^\d,.-]/g,'').replace('.','').replace(',','.')); if(!na||isNaN(na)||isNaN(nb)) return ''; const d=Math.round((1-nb/na)*100); return d>0?`−${d} %`:''; }
-function shortMass(m){ return m.replace(' (WDVS)','').replace('Obergeschossdecke (OGD)','OGD').replace('Fenster-/Türaustausch','Fenster/Tür').replace('Heizungstausch ','').replace(' mit Wärmerückgewinnung','').replace('-Anlage','').replace(' / hydraul. Abgleich',''); }
+function shortMass(m){ return m.replace('Außenwanddämmung','Außenwand').replace('Obergeschossdecke (OGD)','OGD').replace('Fenster-/Türaustausch','Fenster/Tür').replace('Heizungstausch ','').replace(' mit Wärmerückgewinnung','').replace('-Anlage','').replace(' / hydraul. Abgleich',''); }
 
 /* ---------- Panel aufbauen ---------- */
 function buildEekSelects(){
@@ -3040,7 +3091,7 @@ function nichtFoerderfaehig(m, pid){
   return false;
 }
 function begTopfFor(name){
-  const pool=['Fassadendämmung (WDVS)','Dachdämmung','Obergeschossdecke (OGD)','Fenster-/Türaustausch','Kellerdeckendämmung','Vollständige Hüllsanierung','Lüftung mit Wärmerückgewinnung','Gebäudeautomation / Smart Building','Heizungsoptimierung (Effizienzverbesserung)'];
+  const pool=['Außenwanddämmung','Dachdämmung','Obergeschossdecke (OGD)','Fenster-/Türaustausch','Kellerdeckendämmung','Vollständige Hüllsanierung','Lüftung mit Wärmerückgewinnung','Gebäudeautomation / Smart Building','Heizungsoptimierung (Effizienzverbesserung)'];
   if(pool.includes(name)) return 'pool15';
   if(name==='Heizungsoptimierung (Emissionsminderung)') return 'em50';
   if(name==='Heizungstausch Wärmepumpe'||name==='Fernwärmeanschluss') return 'heiztausch';
