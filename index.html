@@ -423,6 +423,7 @@
     .cover-inner{ min-height:0; height:297mm }
   }
 </style>
+<meta name="omelette-owns-print">
 </head>
 <body>
 
@@ -444,7 +445,7 @@
       <div class="proj-btns">
         <button type="button" onclick="exportProject()">Export (Datei)</button>
         <button type="button" onclick="document.getElementById('projImportFile').click()">Import (Datei)</button>
-        <button type="button" onclick="exportProject();window.print()">↓ PDF</button>
+        <button type="button" onclick="exportPdfUndJson()">↓ PDF</button>
         <input type="file" id="projImportFile" accept="application/json" style="display:none" onchange="importProjectFile(this.files[0])">
       </div>
       <div class="hint" style="margin-top:6px">Projekte liegen im Browser-Speicher (begrenzt). Mit „Export" sicherst du ein Projekt dauerhaft als Datei auf deinem Rechner — unabhängig vom Browser-Limit.</div>
@@ -720,7 +721,27 @@ const PROGRAMME_KOMMUNAL_BERLIN = [
   {id:'ibbgenossenschaft', name:'IBB Genossenschaftsförderung – Neubau und Bestand', typ:'Zinsloses Darlehen · Berlin', info:true},
   {id:'gruendachplus', name:'GründachPLUS', typ:'Zuschuss · Land Berlin', info:true}
 ];
+const PROGRAMME_KOMMUNAL_SACHSEN = [
+  {id:'sabpmw', name:'SAB FRL preisgünstiger Mietwohnraum (FRL pMW)', typ:'Zuschuss · Freistaat Sachsen', info:true}
+];
 const INFO_PROGRAMME = {
+  sabpmw:{
+    traeger:'Sächsische Aufbaubank – Förderbank (SAB) · Sächsisches Staatsministerium für Infrastruktur und Landesentwicklung', link:'https://revosax.sachsen.de/vorschrift/21315',
+    lead:'Zuschussprogramm des Freistaates Sachsen zur Modernisierung von Mietwohnraum für Haushalte mit geringem Einkommen. Gefördert werden u. a. Barriereabbau, Gebrauchswerterhöhung, energetische Maßnahmen und Klimaanpassung; im Gegenzug gelten 15 Jahre Miet- und Belegungsbindung. Energetisch hochwertige Modernisierungen (mind. EH 85 bzw. EH Denkmal) werden besonders gefördert — ausschließlich ergänzend zur BEG WG in der Kreditvariante.',
+    facts:[
+      ['Förderart','nicht rückzahlbarer Zuschuss (Projekt-/Anteilfinanzierung)'],
+      ['Fördersatz Standard','35 % der zuwendungsfähigen Ausgaben (KG 300–500 und 700), max. 640 €/m² Wohnfläche'],
+      ['Energetisch hochwertig','ab EH 85 / EH Denkmal: 45 % auf BEG-förderfähige Kosten inkl. Umfeldmaßnahmen, 60 % auf übrige Kosten — ohne Höchstbetrag je m²'],
+      ['QNG-Bonus','+5 Prozentpunkte bei QNG-PLUS oder QNG-PREMIUM'],
+      ['Mindestinvestition','320 €/m² Wohnfläche zuwendungsfähige Gesamtausgaben'],
+      ['Objektvoraussetzung','mehr als zwei Mietwohnungen; Gebäude mind. 15 Jahre alt; in Gemeinden < 300.000 EW bewohnt, Baudenkmal oder besonders erhaltenswert'],
+      ['Bindung','15 Jahre Belegungsbindung (WBS); Höchstmiete aus 6,80 €/m² bzw. 7,50 €/m² (energetisch hochwertig), fortgeschrieben ab 31.12.2021'],
+      ['Antragsberechtigt','Eigentümer und Erbbauberechtigte; Antrag bei der SAB, Bestätigung der Gemeinde (INSEK) erforderlich'],
+      ['Kombination','mit Bund/Land/EU kombinierbar bis max. Gesamtausgaben; nicht mit RL Aufzugsanlagen Mietwohngebäude'],
+      ['Laufzeit','Richtlinie gültig bis 31.12.2031']
+    ],
+    punkte:['Abbau von Barrieren, Zugänglichkeit von Wohnung, Gebäude und Grundstück','Gebrauchswerterhöhung: Grundrissanpassung, Sanitärräume, Balkone, Aufzüge','Schall-, Radon- und Einbruchschutz','Reduzierung von Energieverbrauch und CO2, Ausbau erneuerbarer Wärme/Kälte (reine Stromanlagen wie PV und Speicher ausgenommen)','Gestaltung von Fassade und Außenanlagen','Dach- und Fassadenbegrünung sowie Klimaanpassung','Wohnflächengrenzen: 45 m² (1 Pers.), 60 m² (2), 75 m² (3), 85 m² (4), je weitere Person +10 m²','Keine erneute Förderung von Bauteilen, die in den letzten 15 Jahren wesentlich modernisiert wurden']
+  },
   ibbeffizienzhaus:{
     traeger:'Investitionsbank Berlin (IBB)', link:'https://www.ibb.de/de/foerderprogramme/ibb-energetische-gebaeudesanierung-effizienzhaus.html',
     lead:'Förderdarlehen für Vermietende und Investoren, das den zinsgünstigen KfW-Kredit 261 mit einer zusätzlichen Zinssubvention des Landes Berlin kombiniert. Ziel ist die Komplettsanierung des Wohnungsbestands auf Effizienzhaus-Niveau.',
@@ -1022,7 +1043,7 @@ window.editInfo=(id,k,v)=>{ S.prog[id][k]=v; save(); renderDoc(); };
 function infoDetailHtml(p,d,i,total){
   const m=INFO_PROGRAMME[p.id];
   return `<div class="page">
-    <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)} · Kommunale Förderung</div><h2>${esc(p.name)}.</h2></div>
+    <div class="ph"><div><div class="kick">03 · Szenario ${String.fromCharCode(65+i)} · ${/Sachsen/.test(p.typ)?'Landesförderung':'Kommunale Förderung'}</div><h2>${esc(p.name)}.</h2></div>
       <div class="obj"><b>${esc(p.typ)}</b><br>${esc(m.traeger)}</div></div>
     <div class="rule"></div>
     <div class="d-lead">${esc(d.lead||m.lead)}</div>
@@ -1112,6 +1133,7 @@ function renderBlUI(){
 }
 window.setBundesland=(v)=>{ S.obj.bundesland=v; save(); renderBlUI(); renderProgToggles(); renderProgBlocks(); renderDoc(); };
 function istBerlin(){ return bundesland()==='Berlin'; }
+function istSachsen(){ return bundesland()==='Sachsen'; }
 function istMuenchen(){
   const n=parseInt(plzNorm(S.obj.plz),10);
   return (n>=80331 && n<=81929) || /m[üu]nchen/i.test(S.obj.ort||'');
@@ -1268,6 +1290,7 @@ function PK(){
     out = out.concat(kom);
   }
   if(istMuenchen()) out = out.concat(PROGRAMME_KOMMUNAL_MUENCHEN);
+  if(istSachsen()) out = out.concat(PROGRAMME_KOMMUNAL_SACHSEN);
   return out;
 }
 
@@ -1450,9 +1473,28 @@ window.exportProject=()=>{
   const cur = PROJ.list.find(p=>p.id===PROJ.current);
   const blob = new Blob([JSON.stringify(S,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download=(cur?cur.name:'projekt').replace(/[^a-z0-9äöüß _-]/gi,'')+'.json'; a.click();
-  URL.revokeObjectURL(url);
+  const a = document.createElement('a'); a.href=url; a.download=(cur?cur.name:'projekt').replace(/[^a-z0-9äöüß _-]/gi,'')+'.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
 };
+window.exportPdfUndJson=()=>{
+  try{ save(); }catch(e){}
+  const cur = PROJ.list.find(p=>p.id===PROJ.current);
+  const inFrame = (()=>{ try{ return window.self!==window.top; }catch(e){ return true; } })();
+  if(inFrame){
+    exportProject();
+    try{ window.print(); }catch(e){}
+    return;
+  }
+  const oldTitle = document.title;
+  if(cur) document.title = cur.name;
+  const after = ()=>{ window.removeEventListener('afterprint', after); document.title = oldTitle; exportProject(); };
+  window.addEventListener('afterprint', after);
+  window.print();
+};
+window.addEventListener('load', ()=>{
+  if(location.hash==='#pdf'){ history.replaceState(null,'',location.href.split('#')[0]); setTimeout(()=>window.exportPdfUndJson(), 800); }
+});
 window.importProjectFile=(file)=>{
   if(!file) return;
   const r = new FileReader();
@@ -1491,7 +1533,7 @@ if(S.obj.bild && S.obj.bild.length>400000){
   shrinkOversizedImage(S.obj.bild, smaller=>{ S.obj.bild=smaller; save(); if(document.getElementById('progBlocks')) renderDoc(); });
 }
 // Merge fehlende prog-Defaults (falls neue Programme dazukommen)
-for(const p of [...PROGRAMME_KATALOG_WG, ...PROGRAMME_KATALOG_NWG, ...PROGRAMME_KOMMUNAL_BERLIN]){ if(!S.prog[p.id]) S.prog[p.id] = JSON.parse(JSON.stringify(DEFAULT.prog[p.id]||{klasse:'',massnahmen:[],kask:[]})); }
+for(const p of [...PROGRAMME_KATALOG_WG, ...PROGRAMME_KATALOG_NWG, ...PROGRAMME_KOMMUNAL_BERLIN, ...PROGRAMME_KOMMUNAL_SACHSEN]){ if(!S.prog[p.id]) S.prog[p.id] = JSON.parse(JSON.stringify(DEFAULT.prog[p.id]||{klasse:'',massnahmen:[],kask:[]})); }
 if(S.progAktivNWG===undefined) S.progAktivNWG = DEFAULT.progAktivNWG.slice();
 if(S.progRecNWG===undefined) S.progRecNWG = DEFAULT.progRecNWG;
 if(!S.fazit) S.fazit = JSON.parse(JSON.stringify(DEFAULT.fazit));
@@ -2598,7 +2640,7 @@ function renderDoc(){
     ${aktiv('ibbsolarl')?(()=>{ const c=ibbCalc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB SolarPLUS L</b> — Zuschuss des Landes Berlin für Photovoltaik, Speicher und Messinfrastruktur (${c.g.a} % / ${c.g.b} % je Modul, modulbezogene Höchstbeträge)${c.foe>0?`. Für die geplanten Module: <b>${_eur(c.foe)} Zuschuss</b>`:''}. Details siehe eigene Programmseite.</div>`; })():''}
     ${aktiv('ibbco2')?(()=>{ const c=ibbco2Calc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB CO2-Sparende Gebäude</b> — zinsloses Darlehen nach erreichter CO₂-Einsparung (${IBBCO2_SATZ} € je kg CO₂e und m²)${c.basis>0?`, hier rund <b>${_eur(c.basis)}</b>${c.bonus>0?` inkl. ${_eur(c.bonus)} Zuschuss`:''}`:''}. Details siehe eigene Programmseite.</div>`; })():''}
     ${aktiv('ibbjunges')?(()=>{ const c=ibbjwCalc(); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Zusätzlich möglich: <b>IBB Junges Wohnen</b> — zinsloses Baudarlehen und Baukostenzuschuss für Wohnplätze für Studierende und Auszubildende (ab ${IBBJW_MIN_PLAETZE} Plätzen)${c.gesamt>0?`, hier rund <b>${_eur(c.gesamt)}</b> Gesamtförderung`:''}. Details siehe eigene Programmseite.</div>`; })():''}
-    ${(()=>{ const infos=active.filter(p=>isInfoProg(p.id)); return infos.length?`<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · Berlin</span> Ergänzend geprüft: <b>${infos.map(p=>esc(p.name)).join('</b>, <b>')}</b> — diese Berliner Programme sind je nach Vorhaben zusätzlich nutzbar. Erläuterung auf den folgenden Seiten.</div>`:''; })()}
+    ${(()=>{ const infos=active.filter(p=>isInfoProg(p.id)); return infos.length?`<div class="gzw-banner"><span class="gzw-banner-tag">+ ${istSachsen()?'Land · Sachsen':'Kommunal · Berlin'}</span> Ergänzend geprüft: <b>${infos.map(p=>esc(p.name)).join('</b>, <b>')}</b> — ${istSachsen()?'diese sächsischen Landesprogramme sind':'diese Berliner Programme sind'} je nach Vorhaben zusätzlich nutzbar. Erläuterung auf den folgenden Seiten.</div>`:''; })()}
     ${(()=>{ const fkg=active.filter(p=>/^fkg/.test(p.id)); if(!fkg.length) return ''; const teile=fkg.map(p=>{ const c=fkgCalc(p.id); return `<b>${esc(p.name)}</b> (${deNum(c.satz,0)} %${c.zuschuss>0?` ≈ ${_eur(c.zuschuss)}`:''})`; }).join(' · '); return `<div class="gzw-banner"><span class="gzw-banner-tag">+ Kommunal · München</span> Zusätzlich möglich über das Förderprogramm klimaneutrale Gebäude der Stadt München: ${teile}. Details siehe eigene Programmseiten.</div>`; })()}
     <div class="note">Alle Angaben indikativ · Stand 2026</div>
     ${footLine(3,total)}
@@ -3018,6 +3060,7 @@ function renderProgToggles(){
     if(info.length) html += `<div class="prog-cat">Kommunal · Berlin — nur Erklärseite</div>` + info.map(tog).join('');
   }
   if(istMuenchen() && !isNB()) html += `<div class="prog-cat">Kommunale Förderung · München</div>` + PROGRAMME_KOMMUNAL_MUENCHEN.map(tog).join('');
+  if(istSachsen() && !isNB()) html += `<div class="prog-cat">Landesförderung · Sachsen — nur Erklärseite</div>` + PROGRAMME_KOMMUNAL_SACHSEN.map(tog).join('');
   document.getElementById('progToggles').innerHTML = html;
 }
 window.toggleProg=(id,on)=>{
